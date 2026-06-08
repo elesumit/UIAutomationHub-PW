@@ -1,0 +1,32 @@
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+infra/tfplan
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node (Docusaurus sites)
+node_modules/
+build/
+.docusaurus/
+
+# Python (MkDocs sites)
+__pycache__/
+*.pyc
+.venv/
+
+# Hugo
+resources/_gen/
+public/
+
+# Environment
+.env
+.env.local

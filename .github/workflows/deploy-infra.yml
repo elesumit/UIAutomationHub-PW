@@ -1,0 +1,268 @@
+name: Terraform Validate & Deploy
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - ".github/workflows/deploy-infra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - ".github/workflows/deploy-infra.yml"
+
+permissions:
+  id-token: write
+  contents: read
+  repository-projects: read
+
+env:
+  tf_version: 1.12.2
+  TF_IN_AUTOMATION: true
+
+defaults:
+  run:
+    working-directory: ./infra
+
+jobs:
+  Terraform-Validate:
+    # Skip on template repo — only run on site repos created from this template
+    if: github.repository != 'veradigm-techops/az-staticWeb-template'
+    name: Terraform Validate
+    runs-on: az-terraform
+    steps:
+      - name: Checkout files
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Extract MI client ID
+        id: config
+        run: |
+          MI_CLIENT_ID=$(python3 -c "import json; print(json.load(open('terraform.tfvars.json'))['mi_client_id'])")
+          echo "MI_CLIENT_ID=$MI_CLIENT_ID" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=$MI_CLIENT_ID" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=21d8e422-7fd3-4634-8c8a-01dfde9a5502" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=54305029-7d35-40a9-8bf9-950963b449cc" >> $GITHUB_ENV
+
+      - name: Install Terraform
+        id: install_terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform Fmt
+        id: fmt
+        run: terraform fmt --recursive --check
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          LOG: plan.terraform.log
+          TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
+          TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+        run: |
+          set -o pipefail
+          terraform plan -lock=false -input=false \
+            2>&1 | tee $LOG
+
+          FILE_PATH="$LOG"
+          WORKING_FILE_PATH="__tmp/$FILE_PATH"
+          mkdir -p "$(dirname "$WORKING_FILE_PATH")"
+          cp "$FILE_PATH" "$WORKING_FILE_PATH"
+
+          sed 's/\x1b\[[0-9;]*m//g' -i'' "$WORKING_FILE_PATH"
+          grep -v "Refreshing state...\|[rR]eading...\|Read complete after\|::debug:" "$WORKING_FILE_PATH" > "$WORKING_FILE_PATH-tmp" && mv "$WORKING_FILE_PATH-tmp" "$WORKING_FILE_PATH"
+
+          NO_CHANGES=$(grep "No changes" "$WORKING_FILE_PATH" || echo "")
+          if [[ ${#NO_CHANGES} -gt 0 ]]; then
+              echo "$NO_CHANGES" | sed 's|No changes|<span style="font-weight:bold;color:darkgreen">No changes</span>|g'
+              exit 0
+          fi
+          PLANNED_CHANGES=$(grep "Plan: " "$WORKING_FILE_PATH" || echo "")
+          if [[ "${PLANNED_CHANGES}" == "" ]]; then
+              echo "Couldn't find any planned changes output."
+              exit 0
+          fi
+
+          sed '/Plan: /q' -i'' "$WORKING_FILE_PATH"
+          sed '0,/Terraform will perform the following actions/d' -i'' "$WORKING_FILE_PATH"
+
+          cat <<-HEADER >> $GITHUB_STEP_SUMMARY
+          <span style='font-size:1.25rem;font-weight:semibold'>$PLANNED_CHANGES</span>
+          <details><summary>Expand for Terraform plan full output</summary><p>
+
+          \`\`\`tf
+          Terraform will perform the following actions:
+          HEADER
+          cat $WORKING_FILE_PATH >> $GITHUB_STEP_SUMMARY
+          cat <<-FOOTER >> $GITHUB_STEP_SUMMARY
+          \`\`\`
+          </p></details>
+          FOOTER
+          rm "$WORKING_FILE_PATH"
+
+  Terraform-Deploy:
+    if: github.ref == 'refs/heads/main'
+    name: Terraform Deploy
+    runs-on: az-terraform
+    needs: Terraform-Validate
+    environment:
+      name: production
+    steps:
+      - name: Checkout files
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Extract MI client ID
+        id: config
+        run: |
+          MI_CLIENT_ID=$(python3 -c "import json; print(json.load(open('terraform.tfvars.json'))['mi_client_id'])")
+          echo "MI_CLIENT_ID=$MI_CLIENT_ID" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=$MI_CLIENT_ID" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=21d8e422-7fd3-4634-8c8a-01dfde9a5502" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=54305029-7d35-40a9-8bf9-950963b449cc" >> $GITHUB_ENV
+
+      - name: Install Terraform
+        id: install_terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.tf_version }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        id: apply
+        env:
+          LOG: apply.terraform.log
+          TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
+          TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+        run: |
+          set -o pipefail
+          terraform apply -input=false -auto-approve \
+            2>&1 | tee $LOG
+
+          FILE_PATH="$LOG"
+          WORKING_FILE_PATH="__tmp/$FILE_PATH"
+          mkdir -p "$(dirname "$WORKING_FILE_PATH")"
+          cp "$FILE_PATH" "$WORKING_FILE_PATH"
+
+          sed 's/\x1b\[[0-9;]*m//g' -i'' "$WORKING_FILE_PATH"
+          grep -v "Refreshing state...\|[rR]eading...\|Read complete after\|::debug:" "$WORKING_FILE_PATH" > "$WORKING_FILE_PATH-tmp" && mv "$WORKING_FILE_PATH-tmp" "$WORKING_FILE_PATH"
+
+          NO_CHANGES=$(grep "No changes" "$WORKING_FILE_PATH" || echo "")
+          if [[ ${#NO_CHANGES} -gt 0 ]]; then
+              echo "$NO_CHANGES" | sed 's|No changes|<span style="font-weight:bold;color:darkgreen">No changes</span>|g'
+              exit 0
+          fi
+          APPLIED_CHANGES=$(grep "Apply complete" "$WORKING_FILE_PATH" || echo "")
+          if [[ "${APPLIED_CHANGES}" == "" ]]; then
+              echo "Couldn't find any applied changes output."
+              exit 0
+          fi
+
+          sed '0,/Terraform will perform the following actions/d' -i'' "$WORKING_FILE_PATH"
+
+          cat <<-HEADER >> $GITHUB_STEP_SUMMARY
+          <span style='font-size:1.25rem;font-weight:semibold'>$APPLIED_CHANGES</span>
+          <details><summary>Expand for Terraform apply output</summary><p>
+
+          \`\`\`tf
+          Terraform performed the following actions:
+          HEADER
+          cat $WORKING_FILE_PATH >> $GITHUB_STEP_SUMMARY
+          cat <<-FOOTER >> $GITHUB_STEP_SUMMARY
+          \`\`\`
+          </p></details>
+          FOOTER
+          rm "$WORKING_FILE_PATH"
+
+      # Log in to Azure CLI using OIDC — per-site managed identity from tfvars.
+      - name: Azure CLI login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.MI_CLIENT_ID }}
+          tenant-id: 21d8e422-7fd3-4634-8c8a-01dfde9a5502
+          subscription-id: 54305029-7d35-40a9-8bf9-950963b449cc
+
+      # Add site's custom domain to the shared WAF security policy.
+      # Required for managed TLS certificate deployment on Front Door.
+      # The AllowSWAAuthCallbacks custom rule on the WAF allows /.auth/ paths
+      # through so the Entra ID OAuth form_post callback is not blocked.
+      - name: Add custom domain to WAF security policy
+        run: |
+          SITE_NAME=$(terraform output -raw site_name 2>/dev/null || cat terraform.tfvars.json | python3 -c "import sys,json; print(json.load(sys.stdin)['site_name'])")
+          CUSTOM_DOMAIN_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Cdn/profiles/Ue1NePrdFrontDoorCdn/customDomains/${SITE_NAME}-internal-veradigm-com"
+          ENDPOINT_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Cdn/profiles/Ue1NePrdFrontDoorCdn/afdEndpoints/Ue1NePrdFrontDoorEndpoint"
+          WAF_POLICY_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Network/frontDoorWebApplicationFirewallPolicies/Ue1NePrdFrontDoorWaf"
+
+          # Get current domains in the security policy
+          CURRENT_DOMAINS=$(az afd security-policy show \
+            --profile-name Ue1NePrdFrontDoorCdn \
+            --resource-group Ue1NePrdResourceGroup \
+            --security-policy-name Ue1NePrdFrontDoorSecPolicy \
+            --query "parameters.associations[].domains[].id" -o tsv 2>/dev/null || echo "")
+
+          # Check if our domain is already in the policy
+          if echo "$CURRENT_DOMAINS" | grep -q "$SITE_NAME-internal-veradigm-com"; then
+            echo "Custom domain already in WAF security policy"
+          else
+            # Build domain list: existing + new
+            DOMAIN_ARGS="$ENDPOINT_ID"
+            for d in $CURRENT_DOMAINS; do
+              # Skip the endpoint (we already have it) and skip duplicates
+              if [[ "$d" != *"afdEndpoints"* ]]; then
+                DOMAIN_ARGS="$DOMAIN_ARGS $d"
+              fi
+            done
+            DOMAIN_ARGS="$DOMAIN_ARGS $CUSTOM_DOMAIN_ID"
+
+            az afd security-policy update \
+              --profile-name Ue1NePrdFrontDoorCdn \
+              --resource-group Ue1NePrdResourceGroup \
+              --security-policy-name Ue1NePrdFrontDoorSecPolicy \
+              --domains $DOMAIN_ARGS \
+              --waf-policy "$WAF_POLICY_ID" \
+              -o none
+            echo "Added custom domain to WAF security policy"
+          fi
+
+      # Redirect URI registration (manual step):
+      # After deploy, add https://<site_name>.internal.veradigm.com/.auth/login/aad/callback
+      # to app-staticweb-sso in Azure Portal → App registrations → Authentication.
+      # Requires Global Admin for automated Graph API access, so this remains manual.
+
+      # Extract SWA deployment tokens and set as repo secrets after apply
+      - name: Set SWA deployment tokens
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_BOOTSTRAP }}
+          REPO: ${{ github.repository }}
+        run: |
+          PRIMARY_KEY=$(terraform output -raw swa_primary_api_key)
+          DR_KEY=$(terraform output -raw swa_dr_api_key)
+          gh secret set SWA_DEPLOY_TOKEN_UE2 --repo "$REPO" --body "$PRIMARY_KEY"
+          gh secret set SWA_DEPLOY_TOKEN_UC1 --repo "$REPO" --body "$DR_KEY"
+          echo "SWA deployment tokens configured"
+
+      # Notify bootstrap repo that infra is deployed
+      - name: Trigger post-provisioning
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_BOOTSTRAP }}
+          SITE_CONFIG: ${{ vars.SITE_CONFIG }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/veradigm-techops/az-staticWeb-bootstrap/dispatches" \
+            -d "{\"event_type\":\"infra-deployed\",\"client_payload\":{\"config\":$SITE_CONFIG}}"

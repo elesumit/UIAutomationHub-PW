@@ -1,0 +1,90 @@
+name: Deploy Static Site Content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+  workflow_dispatch:
+
+# Only one deployment at a time
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Skip on template repo — only run on site repos created from this template
+    if: github.repository != 'veradigm-techops/az-staticWeb-template'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy plain HTML
+        run: |
+          mkdir -p build
+          cp -r site/* build/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: build/
+
+  deploy-primary:
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production-ue2
+    steps:
+      - name: Check deploy token exists
+        env:
+          TOKEN: ${{ secrets.SWA_DEPLOY_TOKEN_UE2 }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::SWA_DEPLOY_TOKEN_UE2 not set yet — skipping deploy (infra may still be provisioning)"
+            exit 1
+          fi
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-build
+          path: build/
+
+      - name: Deploy to Primary SWA (East US 2)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOY_TOKEN_UE2 }}
+          action: upload
+          app_location: build/
+          skip_app_build: true
+
+  deploy-dr:
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production-uc1
+    steps:
+      - name: Check deploy token exists
+        env:
+          TOKEN: ${{ secrets.SWA_DEPLOY_TOKEN_UC1 }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::SWA_DEPLOY_TOKEN_UC1 not set yet — skipping deploy (infra may still be provisioning)"
+            exit 1
+          fi
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-build
+          path: build/
+
+      - name: Deploy to DR SWA (Central US)
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.SWA_DEPLOY_TOKEN_UC1 }}
+          action: upload
+          app_location: build/
+          skip_app_build: true

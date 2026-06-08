@@ -1,0 +1,10 @@
+# Default code owners for all site repos created from this template.
+# Bootstrap automation sets repo_permissions per team; this file ensures
+# the RRE is always required for infra changes.
+
+# Infrastructure and workflow changes require RRE review
+/infra/ @aharden
+/.github/workflows/ @aharden
+
+# Site content changes — no specific code owner required.
+# Any team member with push access can approve.
