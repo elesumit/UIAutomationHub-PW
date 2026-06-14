@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Test Generator - Veradigm Automation Platform</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b82f6 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 60px;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 12px rgba(0,0,0,0.4);
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header .subtitle {
+      font-size: 1.4rem;
+      opacity: 0.95;
+      font-weight: 300;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .header .tagline {
+      font-size: 1.1rem;
+      opacity: 0.85;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.2);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      padding: 50px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin-bottom: 30px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .input-section {
+      margin-bottom: 40px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input-label .icon {
+      font-size: 1.5rem;
+    }
+
+    .criteria-input {
+      width: 100%;
+      padding: 20px;
+      border: 3px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.3s ease;
+      line-height: 1.6;
+      min-height: 150px;
+    }
+
+    .criteria-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .criteria-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .examples-box {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .examples-box .title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .examples-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .examples-box li {
+      padding: 10px 0;
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      position: relative;
+      padding-left: 25px;
+    }
+
+    .examples-box li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 20px 40px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .generate-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5);
+    }
+
+    .generate-btn:active:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .generate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading-section {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .loading-section.show {
+      display: block;
+    }
+
+    .spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid #e2e8f0;
+      border-top: 5px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 25px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 1.1rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .status-message {
+      padding: 18px 24px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      display: none;
+      font-size: 1rem;
+      font-weight: 600;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .status-message.show {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-message.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+
+    .status-message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid #ef4444;
+    }
+
+    .preview-card {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 50px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .preview-card.show {
+      display: block;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .preview-header h2 {
+      font-size: 1.8rem;
+      color: #1e293b;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .metadata-box {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 25px;
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+
+    .metadata-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metadata-item strong {
+      color: #1e293b;
+    }
+
+    .preview-editor {
+      width: 100%;
+      min-height: 500px;
+      padding: 25px;
+      border: 3px solid #e2e8f0;
+      border-radius: 12px;
+      font-family: 'Courier New', 'Monaco', monospace;
+      font-size: 14px;
+      line-height: 1.8;
+      background: #f8fafc;
+      color: #1e293b;
+      transition: all 0.3s ease;
+    }
+
+    .preview-editor:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .action-btn {
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .action-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: #3b82f6;
+      border: 2px solid #3b82f6;
+    }
+
+    .action-btn.secondary:hover {
+      background: #eff6ff;
+      transform: translateY(-2px);
+    }
+
+    .link-button {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: inline-block;
+    }
+
+    .link-button.jira {
+      background: #0052cc;
+      color: white;
+    }
+
+    .link-button.github {
+      background: #24292e;
+      color: white;
+    }
+
+    .link-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .footer {
+      text-align: center;
+      color: rgba(255,255,255,0.8);
+      margin-top: 50px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+      
+      .main-card, .preview-card {
+        padding: 30px;
+      }
+
+      .action-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; text-decoration: none; font-weight: 600; margin-bottom: 20px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+      <span>←</span>
+      <span>Back to Automation Hub</span>
+    </a>
+
+    <div class="header">
+      <h1>🤖 AI Test Generator</h1>
+      <p class="subtitle">Transform Acceptance Criteria into Automated Test Cases</p>
+      <p class="tagline">
+        <span class="badge">Powered by AI</span>
+        <span class="badge">GitHub Models</span>
+        <span class="badge">Instant Generation</span>
+      </p>
+    </div>
+
+    <div class="main-card">
+      <div class="status-message" id="statusMessage"></div>
+
+      <!-- Jira Story Integration Section -->
+      <div class="input-section" style="margin-bottom: 30px;">
+        <label class="input-label">
+          <span class="icon">🎫</span>
+          Jira Story Integration (Optional)
+        </label>
+        
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+          <input 
+            type="text" 
+            id="jiraStoryId" 
+            placeholder="Enter Jira Story ID (e.g., BTC-500)"
+            style="flex: 1; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.3s;"
+            onfocus="this.style.borderColor='#3b82f6'"
+            onblur="this.style.borderColor='#e2e8f0'"
+          />
+          
+          <button 
+            onclick="fetchJiraStory()" 
+            style="padding: 15px 30px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);"
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)'"
+          >
+            📥 Fetch Story
+          </button>
+        </div>
+        
+        <div id="jiraStoryPreview" style="margin-top: 15px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); border-radius: 12px; border-left: 4px solid #3b82f6; display: none;">
+          <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            <span>📋</span>
+            <span>Story Preview</span>
+          </h4>
+          <div id="jiraStoryContent" style="color: #475569; line-height: 1.8;"></div>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <label class="input-label">
+          <span class="icon">✍️</span>
+          Describe Your Acceptance Criteria
+        </label>
+        <textarea 
+          class="criteria-input" 
+          id="criteriaInput"
+          placeholder="Example: User should see appropriate error messages when mandatory fields are not filled in CE Portal case creation"
+        ></textarea>
+        
+        <div class="examples-box">
+          <div class="title">💡 Example Acceptance Criteria</div>
+          <ul>
+            <li>User should see appropriate error messages when mandatory fields are missing in case creation</li>
+            <li>Case created in CE Portal should automatically appear in Salesforce with all correct details</li>
+            <li>System should automatically set priority level based on the impact selected by user</li>
+            <li>User should not be able to submit a case without selecting a product from the dropdown</li>
+          </ul>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" onclick="generateTests()">
+        <span>🚀</span>
+        <span>Generate Test Scenarios</span>
+      </button>
+
+      <div class="loading-section" id="loadingSection">
+        <div class="spinner"></div>
+        <p class="loading-text">AI is analyzing your criteria and generating test scenarios...</p>
+      </div>
+    </div>
+
+    <div class="preview-card" id="previewCard">
+      <div class="preview-header">
+        <h2>
+          <span>📋</span>
+          <span>Generated Test Scenarios</span>
+        </h2>
+      </div>
+
+      <div class="metadata-box" id="metadataBox"></div>
+
+      <!-- Workflow Guide -->
+      <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <span style="font-size: 1.5rem;">📖</span>
+          <strong style="font-size: 1.1rem; color: #1e40af;">Two Ways to Use This Tool</strong>
+        </div>
+        <div style="font-size: 0.9rem; color: #1e3a8a; line-height: 1.6;">
+          <div style="margin-bottom: 15px;">
+            <strong>📤 Workflow 1: Upload to Jira & GitHub</strong>
+            <ul style="margin: 5px 0 0 20px;">
+              <li>Creates <strong>1 Test Case</strong> in Jira with all scenarios</li>
+              <li>Saves feature file to <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">features/</code> folder</li>
+              <li>Links to Test Plan BTC-104</li>
+              <li><strong>Does NOT execute</strong> - just creates the test</li>
+            </ul>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <strong>▶️ Workflow 2: Execute Selected Tests</strong>
+            <ul style="margin: 5px 0 0 20px;">
+              <li>Select test cases from BTC-104</li>
+              <li>Creates Test Execution in Jira</li>
+              <li>Triggers GitHub Actions to run tests</li>
+              <li>Results uploaded to Jira and posted to Slack</li>
+            </ul>
+          </div>
+          <div style="background: #fff; padding: 10px; border-radius: 6px; margin-top: 10px;">
+            <strong>📝 Generated Feature Format:</strong><br>
+            <code style="color: #059669;">@JIRA_PLACEHOLDER @ErrorValidation</code><br>
+            <code style="color: #1e40af;">Feature: Validate error messages</code><br>
+            <br>
+            <code style="color: #1e40af;">&nbsp;&nbsp;Scenario: Submit without product</code><br>
+            <code style="color: #64748b;">&nbsp;&nbsp;&nbsp;&nbsp;When I click "Submit"...</code><br>
+            <br>
+            <span style="font-size: 0.85rem; color: #64748b;">After upload, @JIRA_PLACEHOLDER is replaced with actual Jira key (e.g., @BTC-205)</span>
+          </div>
+        </div>
+      </div>
+
+      <textarea class="preview-editor" id="previewEditor"></textarea>
+
+      <div class="action-buttons">
+        <!-- Workflow 1: Generate & Upload -->
+        <button class="action-btn primary" onclick="uploadToJiraGitHub()" style="grid-column: 1 / -1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 1.1rem; padding: 20px;">
+          <span>�</span>
+          <span>Upload to Jira & GitHub</span>
+        </button>
+
+        <!-- Workflow 2: Execute Selected Tests -->
+        <button class="action-btn primary" onclick="showExecuteExistingTests()" style="grid-column: 1 / -1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); font-size: 1.1rem; padding: 20px;">
+          <span>▶️</span>
+          <span>Execute Selected Tests</span>
+        </button>
+
+        <!-- Utility Buttons -->
+        <button class="action-btn secondary" onclick="showHelp()" style="grid-column: 1;">
+          <span>❓</span>
+          <span>Help</span>
+        </button>
+        <button class="action-btn secondary" onclick="regenerate()">
+          <span>🔄</span>
+          <span>Regenerate</span>
+        </button>
+        <button class="action-btn secondary" onclick="saveToLocal()">
+          <span>📁</span>
+          <span>Save to Features Folder</span>
+        </button>
+        <button class="action-btn secondary" onclick="copyToClipboard()">
+          <span>📋</span>
+          <span>Copy to Clipboard</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Execution Status Card -->
+    <div class="preview-card" id="executionCard" style="display: none;">
+      <div class="preview-header">
+        <h2>
+          <span>⚡</span>
+          <span>Test Execution Status</span>
+        </h2>
+      </div>
+
+      <div id="executionStatus" style="padding: 20px;">
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 10px;">
+            <span id="statusIcon">⏳</span>
+            <span id="statusText">Initializing...</span>
+          </div>
+          <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="progressBar" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+
+        <div id="executionSteps" style="background: #f8fafc; padding: 20px; border-radius: 10px; font-family: monospace; font-size: 0.9rem; max-height: 400px; overflow-y: auto;">
+          <!-- Steps will be added here -->
+        </div>
+
+        <div id="executionLinks" style="margin-top: 20px; display: none; gap: 15px;">
+          <a href="#" class="link-button jira" id="jiraLink" target="_blank">View in Jira</a>
+          <a href="#" class="link-button github" id="githubLink" target="_blank">View in GitHub</a>
+          <button class="link-button" id="viewReportBtn" onclick="viewTestReport()" style="display: none; background: #10b981; color: white; border: none; cursor: pointer;">
+            📊 View Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Veradigm Automation Platform | Powered by GitHub Models (GPT-4o)</p>
+    </div>
+  </div>
+
+  <!-- HTML Report Modal -->
+  <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000;">
+    <div style="background: white; border-radius: 16px; padding: 20px; width: 95%; height: 95%; margin: 2.5% auto; position: relative; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="margin: 0; color: #1e293b;">📊 Test Execution Report</h2>
+        <button onclick="closeReportModal()" style="padding: 8px 16px; border: none; background: #ef4444; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          ✕ Close
+        </button>
+      </div>
+      <iframe id="reportFrame" style="flex: 1; border: 2px solid #e2e8f0; border-radius: 8px; width: 100%;"></iframe>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 20px; padding: 40px; max-width: 850px; width: 90%; max-height: 85vh; overflow-y: auto; margin: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px;">
+        <h2 style="margin: 0; color: #1e293b; font-size: 1.8rem; white-space: nowrap;">🎯 Veradigm Test Generator - Help Guide</h2>
+        <button onclick="closeHelpModal()" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'" style="padding: 10px 18px; border: none; background: #ef4444; color: white; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 1.1rem; transition: all 0.3s;">
+          ✕ Close
+        </button>
+      </div>
+      
+      <div style="color: #334155; line-height: 1.8; font-size: 1rem;">
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; border-left: 5px solid #3b82f6;">
+          <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 1.3rem;">📝 How to Generate Tests</h3>
+          <ol style="margin: 8px 0 0 20px; padding: 0;">
+            <li>Enter test criteria in the text area (e.g., "Login to CE Portal and create a case")</li>
+            <li>Click <strong>"Generate Tests"</strong> or press <kbd style="background: #1e293b; color: white; padding: 2px 8px; border-radius: 4px;">Ctrl+Enter</kbd></li>
+            <li>AI will generate Gherkin scenarios based on your criteria</li>
+          </ol>
+        </div>
+
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border-left: 5px solid #f59e0b;">
+          <h3 style="margin: 0 0 12px 0; color: #92400e; font-size: 1.3rem;">🚀 How to Execute Tests</h3>
+          <ol style="margin: 8px 0 0 20px; padding: 0;">
+            <li>Click <strong>"Execute Selected Tests"</strong> to choose test cases from Jira (BTC-104)</li>
+            <li>Select test cases and click <strong>"Execute Tests"</strong></li>
+            <li>A Test Execution will be created in Jira</li>
+            <li>Tests run automatically via GitHub Actions</li>
+            <li>Results are posted to Slack and updated in Jira</li>
+          </ol>
+        </div>
+
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; border-left: 5px solid #10b981;">
+          <h3 style="margin: 0 0 12px 0; color: #065f46; font-size: 1.3rem;">📤 Upload to Jira & GitHub</h3>
+          <ul style="margin: 8px 0 0 20px; padding: 0;">
+            <li>Uploads generated tests to Jira Xray and GitHub repository</li>
+            <li>Creates test cases in BTC project</li>
+            <li>Links tests to Test Plan BTC-104</li>
+          </ul>
+        </div>
+
+        <div style="padding: 20px; background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); border-radius: 12px; border-left: 5px solid #a855f7;">
+          <h3 style="margin: 0 0 12px 0; color: #6b21a8; font-size: 1.3rem;">🔄 Other Features</h3>
+          <ul style="margin: 8px 0 0 20px; padding: 0;">
+            <li><strong>Regenerate:</strong> Click to regenerate tests with the same criteria using AI variations</li>
+            <li><strong>Save to Features Folder:</strong> Saves generated .feature files to your local features folder</li>
+            <li><strong>Copy to Clipboard:</strong> Copies generated Gherkin scenarios to clipboard</li>
+            <li><strong>View Report:</strong> Available after test execution completes - shows detailed results with screenshots</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execute Selected Tests Modal -->
+  <div id="executeTestsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;">
+    <div style="background: white; border-radius: 16px; padding: 40px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; margin: 50px auto; position: relative;">
+      <h2 style="margin-bottom: 20px; color: #1e293b;">Select Test Cases</h2>
+      
+      <div style="margin-bottom: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0; color: #92400e;"><strong>How it works:</strong> Select test cases from BTC-104, click Execute, and a Test Execution will be created in Jira. Tests will run via GitHub Actions, and results will be posted to Slack automatically.</p>
+      </div>
+
+      <div id="testCasesListSection" style="margin-bottom: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <label style="font-weight: 600;">Available Test Cases:</label>
+          <span id="selectedCount" style="background: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600;">0 test selected</span>
+        </div>
+        <div id="testCasesList" style="max-height: 400px; overflow-y: auto; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+          <div style="text-align: center; color: #64748b; padding: 40px;">Loading test cases...</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: flex-end;">
+        <button onclick="closeExecuteTestsModal()" style="padding: 12px 24px; border: 2px solid #e2e8f0; background: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          Cancel
+        </button>
+        <button onclick="executeSelectedTests()" style="padding: 12px 24px; border: none; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+          Execute Selected Tests
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let generatedContent = '';
+    let generatedMetadata = {};
+    let availableTestCases = [];
+    let selectedTestCaseOption = 'new';
+    let selectedTestKeys = [];
+    let pendingFilename = '';
+
+    function showStatus(message, type) {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span><span>${message}</span>`;
+      statusEl.className = `status-message show ${type}`;
+      
+      setTimeout(() => {
+        statusEl.classList.remove('show');
+      }, 5000);
+    }
+
+    async function generateTests() {
+      const criteria = document.getElementById('criteriaInput').value.trim();
+      
+      if (!criteria) {
+        showStatus('Please enter your acceptance criteria', 'error');
+        return;
+      }
+
+      document.getElementById('generateBtn').disabled = true;
+      document.getElementById('loadingSection').classList.add('show');
+      document.getElementById('previewCard').classList.remove('show');
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: criteria })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to generate test scenarios');
+        }
+
+        generatedContent = data.content;
+        generatedMetadata = data.metadata;
+
+        document.getElementById('previewEditor').value = generatedContent;
+        
+        const scenarioCount = (generatedContent.match(/Scenario:/g) || []).length;
+        document.getElementById('metadataBox').innerHTML = `
+          <div class="metadata-item"><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+          <div class="metadata-item"><strong>Model:</strong> GPT-4o</div>
+          <div class="metadata-item"><strong>Scenarios:</strong> ${scenarioCount}</div>
+          <div class="metadata-item"><strong>Status:</strong> <span style="color: #10b981;">Ready to Save</span></div>
+        `;
+        
+        document.getElementById('previewCard').classList.add('show');
+        showStatus('Test scenarios generated successfully!', 'success');
+
+        document.getElementById('previewCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (error) {
+        showStatus(error.message, 'error');
+        console.error('Generation error:', error);
+      } finally {
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('loadingSection').classList.remove('show');
+      }
+    }
+
+    async function saveToGitHub() {
+      const content = document.getElementById('previewEditor').value;
+      
+      if (!content) {
+        showStatus('No content to save', 'error');
+        return;
+      }
+
+      const scenarioMatch = content.match(/Scenario:\s*(.+)/);
+      let filename = scenarioMatch 
+        ? scenarioMatch[1].replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50) + '.feature'
+        : `AI_Generated_${Date.now()}.feature`;
+
+      const userFilename = prompt('Enter filename for the feature file:', filename);
+      
+      if (!userFilename) return;
+
+      try {
+        const response = await fetch('/api/save-to-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            content, 
+            filename: userFilename.endsWith('.feature') ? userFilename : userFilename + '.feature'
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save to GitHub');
+        }
+
+        showStatus(`Saved to GitHub: ${data.path}`, 'success');
+        
+        if (data.url) {
+          window.open(data.url, '_blank');
+        }
+
+      } catch (error) {
+        showStatus(error.message, 'error');
+        console.error('Save error:', error);
+      }
+    }
+
+    function regenerate() {
+      generateTests();
+    }
+
+    async function downloadFeatureFile() {
+      const content = document.getElementById('previewEditor').value;
+      
+      if (!content) {
+        showStatus('No content to save', 'error');
+        return;
+      }
+
+      // Extract suggested filename from first scenario
+      const scenarioMatch = content.match(/Scenario:\s*(.+)/);
+      let suggestedFilename = scenarioMatch 
+        ? scenarioMatch[1].replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50)
+        : `AI_Generated_${Date.now()}`;
+
+      // Prompt user for filename
+      const userFilename = prompt('Enter filename for the feature file:', suggestedFilename);
+      
+      if (!userFilename) return; // User cancelled
+
+      // Ensure .feature extension
+      const filename = userFilename.endsWith('.feature') ? userFilename : userFilename + '.feature';
+
+      try {
+        const response = await fetch('/api/save-to-local', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, filename })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save feature file');
+        }
+
+        showStatus(`✅ Saved to features folder: ${filename}`, 'success');
+
+      } catch (error) {
+        showStatus(error.message, 'error');
+        console.error('Save error:', error);
+      }
+    }
+
+    function saveToLocal() {
+      downloadFeatureFile();
+    }
+
+    function copyToClipboard() {
+      const content = document.getElementById('previewEditor').value;
+      navigator.clipboard.writeText(content).then(() => {
+        showStatus('Copied to clipboard!', 'success');
+      }).catch(err => {
+        showStatus('Failed to copy to clipboard', 'error');
+      });
+    }
+
+    function addExecutionStep(message, icon = '•') {
+      const stepsDiv = document.getElementById('executionSteps');
+      const timestamp = new Date().toLocaleTimeString();
+      stepsDiv.innerHTML += `<div style="margin-bottom: 8px;"><span style="color: #3b82f6;">${icon}</span> [${timestamp}] ${message}</div>`;
+      stepsDiv.scrollTop = stepsDiv.scrollHeight;
+    }
+
+    function updateProgress(percent, status, icon = '⏳') {
+      document.getElementById('progressBar').style.width = percent + '%';
+      document.getElementById('statusText').textContent = status;
+      document.getElementById('statusIcon').textContent = icon;
+    }
+
+    // Workflow 1: Upload to Jira & GitHub
+    async function uploadToJiraGitHub() {
+      const content = document.getElementById('previewEditor').value;
+      
+      if (!content) {
+        showStatus('No content to upload', 'error');
+        return;
+      }
+
+      // Extract feature summary for filename suggestion
+      const featureMatch = content.match(/Feature:\s*(.+)/);
+      let suggestedFilename = featureMatch 
+        ? featureMatch[1].replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50)
+        : `AI_Generated_${Date.now()}`;
+
+      const userFilename = prompt('Enter filename for the feature file:', suggestedFilename);
+      if (!userFilename) {
+        return;
+      }
+
+      const filename = userFilename.endsWith('.feature') ? userFilename : userFilename + '.feature';
+
+      // Show execution card
+      document.getElementById('executionCard').style.display = 'block';
+      document.getElementById('executionSteps').innerHTML = '';
+      document.getElementById('executionLinks').style.display = 'none';
+      updateProgress(0, 'Starting upload...', '⏳');
+      document.getElementById('executionCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        updateProgress(20, 'Uploading to Jira...', '📤');
+        addExecutionStep('Creating Test Case in Jira...');
+
+        const uploadResponse = await fetch('/api/upload-to-jira-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, filename })
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.details || 'Failed to upload to Jira');
+        }
+
+        const uploadData = await uploadResponse.json();
+        const testKey = uploadData.testKey;
+        const allTestKeys = uploadData.allTestKeys || [testKey];
+        const jiraUrl = uploadData.jiraUrl;
+        const githubUrl = uploadData.githubUrl;
+
+        if (allTestKeys.length > 1) {
+          addExecutionStep(`✅ Test Cases created: ${allTestKeys.join(', ')}`, '✅');
+        } else {
+          addExecutionStep(`✅ Test Case created: ${testKey}`, '✅');
+        }
+        addExecutionStep(`✅ Saved to features/${filename}`, '✅');
+        addExecutionStep(`✅ Linked ${allTestKeys.length} test(s) to BTC-104`, '✅');
+        
+        updateProgress(80, 'Uploading to GitHub...', '📤');
+        addExecutionStep('Uploading to GitHub repository...');
+        
+        // Small delay to show GitHub upload step
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        addExecutionStep(`✅ Uploaded to GitHub: features/${filename}`, '✅');
+        updateProgress(100, 'Upload complete!', '✅');
+
+        // Show both Jira and GitHub links
+        document.getElementById('jiraLink').href = 'https://veradigm.atlassian.net/browse/BTC-104';
+        document.getElementById('jiraLink').textContent = `View Test Plan BTC-104 in Jira`;
+        document.getElementById('githubLink').href = githubUrl;
+        document.getElementById('githubLink').textContent = `View ${filename} in GitHub`;
+        document.getElementById('executionLinks').style.display = 'flex';
+
+        const testCount = allTestKeys.length;
+        showStatus(`${testCount} Test Case(s) created and linked to BTC-104!`, 'success');
+
+      } catch (error) {
+        addExecutionStep(`❌ Error: ${error.message}`, '❌');
+        updateProgress(0, 'Upload failed', '❌');
+        showStatus(error.message, 'error');
+      }
+    }
+
+    // Workflow 2: Execute Existing Tests
+    async function showExecuteExistingTests() {
+      document.getElementById('executeTestsModal').style.display = 'block';
+      await loadExistingTestCases();
+    }
+
+    async function loadExistingTestCases() {
+      const listDiv = document.getElementById('testCasesList');
+      listDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">Loading test cases...</div>';
+
+      try {
+        const response = await fetch('/api/fetch-test-cases');
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch test cases');
+        }
+
+        availableTestCases = data.testCases;
+
+        if (availableTestCases.length === 0) {
+          listDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">No test cases found in BTC-104</div>';
+          return;
+        }
+
+        listDiv.innerHTML = availableTestCases.map(tc => `
+          <label style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+            <input type="checkbox" id="check-${tc.key}" value="${tc.key}" onchange="toggleTestCase('${tc.key}')" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;">
+            <div style="flex: 1;">
+              <strong style="color: #1e293b; font-size: 1rem;">${tc.key}</strong>
+              <div style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">${tc.summary}</div>
+            </div>
+          </label>
+        `).join('');
+
+      } catch (error) {
+        listDiv.innerHTML = `<div style="color: #991b1b; padding: 20px; text-align: center;">Error: ${error.message}</div>`;
+      }
+    }
+
+    function toggleTestCase(key) {
+      const checkbox = document.getElementById(`check-${key}`);
+      
+      if (checkbox && checkbox.checked) {
+        if (!selectedTestKeys.includes(key)) {
+          selectedTestKeys.push(key);
+        }
+      } else {
+        selectedTestKeys = selectedTestKeys.filter(k => k !== key);
+      }
+      
+      updateSelectedCount();
+      console.log('Selected test keys:', selectedTestKeys);
+    }
+
+    function updateSelectedCount() {
+      const countBadge = document.getElementById('selectedCount');
+      const count = selectedTestKeys.length;
+      countBadge.textContent = `${count} test${count !== 1 ? 's' : ''} selected`;
+    }
+
+    function closeExecuteTestsModal() {
+      document.getElementById('executeTestsModal').style.display = 'none';
+      selectedTestKeys = [];
+      updateSelectedCount();
+    }
+
+    async function executeSelectedTests() {
+      if (selectedTestKeys.length === 0) {
+        alert('Please select at least one test case to execute');
+        return;
+      }
+
+      // Save selected keys BEFORE closing modal (which resets the array)
+      const testKeysToExecute = [...selectedTestKeys];
+
+      closeExecuteTestsModal();
+
+      // Show execution card
+      document.getElementById('executionCard').style.display = 'block';
+      document.getElementById('executionSteps').innerHTML = '';
+      document.getElementById('executionLinks').style.display = 'none';
+      updateProgress(0, 'Starting execution...', '⏳');
+      document.getElementById('executionCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      try {
+        updateProgress(30, 'Creating Test Execution in Jira...', '📋');
+        addExecutionStep(`Selected tests: ${testKeysToExecute.join(', ')}`);
+        addExecutionStep('Creating Test Execution in Jira...');
+
+        const createExecResponse = await fetch('/api/create-test-execution', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            testKeys: testKeysToExecute,
+            summary: `Test Execution - ${new Date().toLocaleString()}`
+          })
+        });
+
+        if (!createExecResponse.ok) {
+          const errorData = await createExecResponse.json();
+          throw new Error(errorData.details || 'Failed to create Test Execution');
+        }
+
+        const execData = await createExecResponse.json();
+        const testExecutionKey = execData.testExecutionKey;
+
+        addExecutionStep(`✅ Test Execution created: ${testExecutionKey}`, '✅');
+        updateProgress(60, 'Triggering GitHub Actions...', '🚀');
+
+        // Trigger GitHub Actions
+        addExecutionStep('Triggering GitHub Actions workflow...');
+
+        const executeResponse = await fetch('/api/execute-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            testExecutionKey,
+            testProfile: 'regression'
+          })
+        });
+
+        if (!executeResponse.ok) {
+          throw new Error('Failed to trigger test execution');
+        }
+
+        const executeData = await executeResponse.json();
+
+        addExecutionStep(`✅ Test execution triggered successfully`, '✅');
+        updateProgress(100, 'Tests are running...', '⚡');
+
+        // Show links
+        addExecutionStep('Tests are now running in GitHub Actions...');
+        addExecutionStep('Results will be posted to Slack when complete.');
+
+        document.getElementById('jiraLink').href = execData.jiraUrl;
+        document.getElementById('jiraLink').textContent = `View ${testExecutionKey} in Jira`;
+        document.getElementById('githubLink').href = executeData.workflowUrl;
+        document.getElementById('executionLinks').style.display = 'flex';
+
+        showStatus('Test execution started successfully!', 'success');
+
+        // Start polling for execution status
+        pollExecutionStatus(executeData.workflowUrl, testExecutionKey);
+
+      } catch (error) {
+        addExecutionStep(`❌ Error: ${error.message}`, '❌');
+        updateProgress(0, 'Execution failed', '❌');
+        showStatus(error.message, 'error');
+      }
+    }
+
+    function viewResults() {
+      showStatus('Results viewer coming soon! Check Slack or Jira for now.', 'success');
+    }
+
+    let currentTestExecutionKey = null;
+    let currentRunId = null;
+    let pollInterval = null;
+
+    async function pollExecutionStatus(workflowUrl, testExecutionKey) {
+      currentTestExecutionKey = testExecutionKey;
+      let pollCount = 0;
+      const maxPolls = 60; // Poll for up to 10 minutes (60 * 10 seconds)
+      
+      // Extract and store workflow run ID from URL
+      currentRunId = workflowUrl.split('/').pop();
+
+      pollInterval = setInterval(async () => {
+        pollCount++;
+        
+        try {
+          const runId = currentRunId;
+          
+          // Check workflow status via GitHub API (through our server)
+          const response = await fetch(`/api/check-workflow-status?runId=${runId}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.status === 'completed') {
+              clearInterval(pollInterval);
+              
+              // Update UI based on conclusion
+              if (data.conclusion === 'success') {
+                addExecutionStep('✅ Test execution completed successfully!', '✅');
+                updateProgress(100, 'Execution completed', '✅');
+                showStatus('Tests completed successfully!', 'success');
+              } else {
+                addExecutionStep(`❌ Test execution completed with status: ${data.conclusion}`, '❌');
+                updateProgress(100, 'Execution completed', '⚠️');
+                showStatus(`Tests completed with status: ${data.conclusion}`, 'error');
+              }
+              
+              // Show View Report button
+              document.getElementById('viewReportBtn').style.display = 'inline-flex';
+              addExecutionStep('📊 Test report is now available - click "View Report" button');
+            }
+          }
+        } catch (error) {
+          console.error('Error polling status:', error);
+        }
+        
+        // Stop polling after max attempts
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          addExecutionStep('⚠️ Stopped checking status - please check GitHub Actions manually');
+        }
+      }, 10000); // Poll every 10 seconds
+    }
+
+    async function viewTestReport() {
+      if (!currentRunId) {
+        alert('No workflow run ID available. Please wait for tests to complete.');
+        return;
+      }
+
+      // Open report directly in a new tab - renders correctly with all CSS/JS
+      window.open(`/api/get-test-report?runId=${currentRunId}`, '_blank');
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function showHelp() {
+      document.getElementById('helpModal').style.display = 'flex';
+    }
+
+    function closeHelpModal() {
+      document.getElementById('helpModal').style.display = 'none';
+    }
+
+    async function fetchJiraStory() {
+      const storyId = document.getElementById('jiraStoryId').value.trim();
+      
+      if (!storyId) {
+        alert('⚠️ Please enter a Jira Story ID (e.g., BTC-500)');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        const preview = document.getElementById('jiraStoryPreview');
+        const content = document.getElementById('jiraStoryContent');
+        preview.style.display = 'block';
+        content.innerHTML = '<p style="color: #3b82f6;">⏳ Fetching story from Jira...</p>';
+        
+        // Fetch story from backend
+        const response = await fetch(`/api/jira/story/${storyId}`);
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.details || error.error || 'Failed to fetch story');
+        }
+        
+        const story = await response.json();
+        
+        // Display story preview
+        content.innerHTML = `
+          <div style="margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span style="background: #3b82f6; color: white; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">${story.key}</span>
+              <span style="background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem;">${story.status}</span>
+              <span style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem;">${story.priority}</span>
+            </div>
+            <div style="font-weight: 600; color: #1e293b; font-size: 1.1rem; margin-bottom: 8px;">
+              ${story.summary}
+            </div>
+            <div style="color: #64748b; font-size: 0.9rem;">
+              ${story.issueType} • Assigned to: ${story.assignee}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>📝</span>
+              <span>Description:</span>
+            </div>
+            <div style="color: #475569; line-height: 1.6; padding: 12px; background: white; border-radius: 8px;">
+              ${story.description}
+            </div>
+          </div>
+          
+          <div>
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>✅</span>
+              <span>Acceptance Criteria:</span>
+            </div>
+            <div style="color: #475569; line-height: 1.8; padding: 12px; background: white; border-radius: 8px;">
+              ${story.acceptanceCriteria.map((ac, i) => `<div style="margin-bottom: 8px; display: flex; gap: 8px;"><span style="color: #3b82f6; font-weight: 600;">${i + 1}.</span><span>${ac}</span></div>`).join('')}
+            </div>
+          </div>
+        `;
+        
+        // Auto-populate the criteria textarea
+        const criteriaText = `Story: ${story.summary}
+
+Description:
+${story.description}
+
+Acceptance Criteria:
+${story.acceptanceCriteria.map((ac, i) => `${i + 1}. ${ac}`).join('\n')}`.trim();
+        
+        document.getElementById('criteriaInput').value = criteriaText;
+        
+        // Show success message
+        showStatus('✅ Story fetched successfully! Acceptance criteria populated below.', 'success');
+        
+        console.log('✅ Story fetched and populated:', story.key);
+        
+      } catch (error) {
+        console.error('❌ Error fetching story:', error);
+        
+        const content = document.getElementById('jiraStoryContent');
+        content.innerHTML = `
+          <div style="padding: 15px; background: #fee2e2; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <div style="font-weight: 600; color: #991b1b; margin-bottom: 5px;">❌ Error</div>
+            <div style="color: #7f1d1d;">${error.message}</div>
+          </div>
+        `;
+        
+        showStatus('❌ Failed to fetch story: ' + error.message, 'error');
+      }
+    }
+
+    document.getElementById('criteriaInput').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        generateTests();
+      }
+    });
+  </script>
+</body>
+</html>
