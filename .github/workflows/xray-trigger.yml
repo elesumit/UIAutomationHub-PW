@@ -1,0 +1,345 @@
+name: 🎯 Xray Triggered Test Execution
+
+on:
+  repository_dispatch:
+    types: [xray-trigger]
+  workflow_dispatch:
+    inputs:
+      test_execution_key:
+        description: 'Jira Test Execution Key (e.g., BTC-123)'
+        required: true
+        type: string
+      test_plan_key:
+        description: 'Jira Test Plan Key'
+        required: false
+        type: string
+        default: 'BTC-104'
+      test_profile:
+        description: 'Test profile to run'
+        required: false
+        type: choice
+        options:
+          - smoke
+          - regression
+          - sanity
+        default: 'smoke'
+
+concurrency:
+  group: xray-trigger-${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}
+  cancel-in-progress: true
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: � Check for duplicate runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testExecutionKey = '${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}';
+            const currentRunId = ${{ github.run_id }};
+            
+            // Get all workflow runs for this workflow in the last 5 minutes
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'xray-trigger.yml',
+              status: 'in_progress',
+              per_page: 20
+            });
+            
+            // Check if another run for the same execution key is already running
+            const duplicateRun = runs.workflow_runs.find(run => {
+              return run.id !== currentRunId && 
+                     run.id < currentRunId && // Only check older runs
+                     run.status === 'in_progress';
+            });
+            
+            if (duplicateRun) {
+              console.log(`⚠️ Duplicate run detected! Run #${duplicateRun.run_number} is already processing ${testExecutionKey}`);
+              console.log(`Cancelling this run to prevent duplicate execution`);
+              core.setFailed('Duplicate run detected - cancelling to prevent duplicate execution');
+            } else {
+              console.log(`✅ No duplicate runs found for ${testExecutionKey}`);
+            }
+      
+      - name: �📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: 📦 Install dependencies
+        run: npm install
+        
+      - name: 🌐 Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 📝 Create .env file
+        run: |
+          cat > .env << EOF
+          # Environment Configuration
+          ENV=QA
+          BROWSER=chromium
+          HEADLESS=true
+          
+          # CE Portal URLs
+          CE_QA_URL=${{ secrets.CE_QA_URL }}
+          CE_UAT_URL=${{ secrets.CE_UAT_URL }}
+          
+          # Salesforce URLs
+          SF_QA_URL=${{ secrets.SF_QA_URL }}
+          SF_UAT_URL=${{ secrets.SF_UAT_URL }}
+          
+          # Credentials
+          CE_UserName=${{ secrets.CE_USERNAME }}
+          CE_Password=${{ secrets.CE_PASSWORD }}
+          CEUAT_UserName=${{ secrets.CEUAT_USERNAME }}
+          CEUAT_Password=${{ secrets.CEUAT_PASSWORD }}
+          
+          SF_UserName=${{ secrets.SF_USERNAME }}
+          SF_Password=${{ secrets.SF_PASSWORD }}
+          SFQA_UserName=${{ secrets.SFQA_USERNAME }}
+          SFQA_Password=${{ secrets.SFQA_PASSWORD }}
+          
+          # Xray Configuration
+          XRAY_CLIENT_ID=${{ secrets.XRAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET=${{ secrets.XRAY_CLIENT_SECRET }}
+          XRAY_PROJECT_KEY=BTC
+          XRAY_TEST_EXECUTION_KEY=${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}
+          
+          # Execution Environment
+          CE_Portal_Execution_Env=QA
+          
+          # Jira Integration
+          JIRA_USER=${{ secrets.JIRA_USER }}
+          JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+          
+          # Slack
+          SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
+          ENABLE_SLACK_NOTIFICATIONS=true
+          
+          # Video Recording
+          RECORD_VIDEO=false
+          EOF
+
+      - name: 🔍 Validate Test Plan
+        id: validate_plan
+        run: |
+          TEST_PLAN_KEY="${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}"
+          ALLOWED_TEST_PLAN="BTC-104"
+          
+          if [ -n "$TEST_PLAN_KEY" ] && [ "$TEST_PLAN_KEY" != "null" ]; then
+            if [ "$TEST_PLAN_KEY" != "$ALLOWED_TEST_PLAN" ]; then
+              echo "⚠️ Test Plan $TEST_PLAN_KEY is not the automation Test Plan ($ALLOWED_TEST_PLAN)"
+              echo "⚠️ Skipping execution - this Test Execution is not for automation"
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "✅ Test Plan $TEST_PLAN_KEY matches automation Test Plan"
+              echo "should_run=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ No Test Plan key provided - skipping execution"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      - name: 📋 Fetch Tests from Xray Test Execution
+        id: fetch_tests
+        if: steps.validate_plan.outputs.should_run == 'true'
+        run: |
+          TEST_EXECUTION_KEY="${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }}"
+          
+          if [ -n "$TEST_EXECUTION_KEY" ] && [ "$TEST_EXECUTION_KEY" != "null" ]; then
+            echo "📋 Fetching tests from Test Execution: $TEST_EXECUTION_KEY"
+            npx ts-node scripts/get-xray-tests.ts "$TEST_EXECUTION_KEY"
+            
+            if [ -f .xray-tests.txt ]; then
+              XRAY_TAGS=$(cat .xray-tests.txt)
+              echo "xray_tags=$XRAY_TAGS" >> $GITHUB_OUTPUT
+              echo "✅ Will run tests: $XRAY_TAGS"
+            else
+              echo "⚠️ No tests found in Test Execution, will use profile-based execution"
+              echo "xray_tags=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ No Test Execution key provided, will use profile-based execution"
+            echo "xray_tags=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📢 Send Slack Notification - Execution Started
+        if: steps.validate_plan.outputs.should_run == 'true'
+        run: |
+          if [ "${{ secrets.SLACK_WEBHOOK_URL }}" != "" ]; then
+            TEST_EXECUTION_KEY="${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}"
+            TEST_PROFILE="${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}"
+            GITHUB_RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            JIRA_URL="https://veradigm.atlassian.net/browse/${TEST_EXECUTION_KEY}"
+            
+            curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+              -H 'Content-Type: application/json' \
+              -d "{
+                \"text\": \"🚀 *Test Execution Started*\n\n*Profile:* ${TEST_PROFILE:-smoke}\n*Triggered by:* @${{ github.actor }}\n*Branch:* ${{ github.ref_name }}\n*Workflow:* <${GITHUB_RUN_URL}|#${{ github.run_number }}>\n*Environment:* QA\n\n🔗 <${JIRA_URL}|View Test Execution in Jira>\"
+              }"
+          fi
+
+      - name: 🧪 Run Tests
+        id: test_execution
+        if: steps.validate_plan.outputs.should_run == 'true'
+        continue-on-error: true
+        run: |
+          XRAY_TAGS="${{ steps.fetch_tests.outputs.xray_tags }}"
+          
+          if [ -n "$XRAY_TAGS" ]; then
+            # Run only the specific tests from Xray Test Execution
+            echo "🚀 Running tests from Xray Test Execution"
+            echo "📋 Test tags: $XRAY_TAGS"
+            
+            # Run tests with xray wrapper to ensure results are uploaded
+            node scripts/run-with-xray.js "npx cucumber-js --tags \"$XRAY_TAGS\" --profile default"
+          else
+            # Fallback to profile-based execution if no Xray tags
+            TEST_PROFILE="${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}"
+            
+            if [ -z "$TEST_PROFILE" ] || [ "$TEST_PROFILE" == "null" ]; then
+              TEST_PROFILE="smoke"
+            fi
+            
+            echo "🚀 Running $TEST_PROFILE tests (fallback mode)"
+            echo "📋 Test Plan: ${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}"
+            
+            case "$TEST_PROFILE" in
+              smoke)
+                npm run test:smoke:xray
+                ;;
+              regression)
+                npm run test:regression:xray
+                ;;
+              *)
+                npm run test:smoke:xray
+                ;;
+            esac
+          fi
+
+      - name: � Generate Enhanced HTML Report
+        if: always()
+        run: |
+          echo "📊 Generating enhanced HTML report with pie charts..."
+          npm run generate-report || echo "⚠️ Enhanced report generation failed, continuing with basic report"
+          
+          if [ -f "test-results/enhanced-report/index.html" ]; then
+            echo "✅ Enhanced report generated successfully"
+          else
+            echo "⚠️ Enhanced report not found, basic report will be used"
+          fi
+
+      - name: �📋 Upload Cucumber reports (includes screenshots & videos)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-reports-xray-${{ github.run_number }}
+          path: test-results/
+          retention-days: 30
+
+      - name: 📧 Create test execution summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            const summary = {
+              runId: '${{ github.run_number }}',
+              testPlan: '${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}',
+              testProfile: '${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}',
+              environment: 'QA',
+              browser: 'chromium',
+              headless: 'true',
+              timestamp: new Date().toISOString(),
+              status: '${{ job.status }}',
+              framework: 'Cucumber + Playwright',
+              project: 'Veradigm Automation',
+              triggeredFrom: 'Jira Xray'
+            };
+            
+            fs.mkdirSync('test-results', { recursive: true });
+            fs.writeFileSync('test-results/execution-summary.json', JSON.stringify(summary, null, 2));
+            console.log('Test execution summary created');
+            
+      - name: 📤 Upload execution summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-summary-xray-${{ github.run_number }}
+          path: test-results/execution-summary.json
+          retention-days: 90
+
+      - name: 📊 Parse test results for Slack
+        id: parse_results
+        if: always()
+        run: |
+          # Parse JUnit XML to get test counts
+          if [ -f "test-results/junit-report.xml" ]; then
+            echo "📄 Parsing JUnit report..."
+            
+            TOTAL=$(sed -n 's/.*tests="\([0-9]*\)".*/\1/p' test-results/junit-report.xml | head -1)
+            FAILURES=$(sed -n 's/.*failures="\([0-9]*\)".*/\1/p' test-results/junit-report.xml | head -1)
+            
+            TOTAL=${TOTAL:-0}
+            FAILURES=${FAILURES:-0}
+            PASSED=$((TOTAL - FAILURES))
+            
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILURES" >> $GITHUB_OUTPUT
+            
+            if [ $FAILURES -eq 0 ]; then
+              echo "status=✅ All tests passed" >> $GITHUB_OUTPUT
+              echo "status_emoji=✅" >> $GITHUB_OUTPUT
+            else
+              echo "status=❌ Some tests failed" >> $GITHUB_OUTPUT
+              echo "status_emoji=❌" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ JUnit report not found"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "status=⚠️ No test results" >> $GITHUB_OUTPUT
+            echo "status_emoji=⚠️" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📢 Post results to Slack (Backup)
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TEST_EXECUTION_KEY: ${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }}
+        run: |
+          # This is a backup notification in case xray-upload script's Slack notification fails
+          # The primary notification should come from the xray-upload.ts script
+          
+          JIRA_URL="https://veradigm.atlassian.net/browse/${TEST_EXECUTION_KEY}"
+          
+          # Only send if xray-upload didn't already send (check for specific conditions)
+          echo "ℹ️ Backup Slack notification - primary notification should come from xray-upload script"
+          echo "🔗 Test Execution: ${JIRA_URL}"
+
+      - name: 📊 Test Summary
+        if: always()
+        run: |
+          echo "## 🎯 Xray Triggered Test Execution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered From:** Jira Xray" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Execution:** [${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }}](https://veradigm.atlassian.net/browse/${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Plan:** ${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Profile:** ${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.test_execution.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Total: ${{ steps.parse_results.outputs.total }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Passed: ${{ steps.parse_results.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ Failed: ${{ steps.parse_results.outputs.failed }}" >> $GITHUB_STEP_SUMMARY

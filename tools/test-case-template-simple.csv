@@ -1,0 +1,47 @@
+Test Case ID,Scenario Name,Tags,Action,Element Name,Value (if entering text)
+BTC-135,Create Case and Validate in Salesforce,"@smoke, @regression",Open,CE Portal,
+,,,Click,Log in button,
+,,,Type,Username field,
+,,,Click,Continue button,
+,,,Type,Password field,
+,,,Click,Continue button,
+,,,Click,Support link,
+,,,Type,Search box,Portal
+,,,Click,Create a Case button,
+,,,Choose,Product dropdown,Veradigm Fiscal Management and Supply Chain Solutions
+,,,Choose,Account dropdown,Sumit Gupta Pediatrics
+,,,Choose,Impact dropdown,Partial loss of service
+,,,Type,Subject field,Test12 Portal access is not working
+,,,Type,Description field,Test12 Not able to access Portal
+,,,Choose,Contact Method dropdown,Phone
+,,,Type,Case Collaborators field,Sejal Nagpal
+,,,Click,Sejal Nagpal from list,
+,,,Type,PHI Details box,Details: User is not able to login
+,,,Attach,Upload Files button,FileUpload_1.PNG
+,,,Click,Done button,
+,,,Click,Submit button,
+,,,Remember,Case Number,caseId1
+,,,Check,Priority field shows,High
+,,,Open,Salesforce,
+,,,Type,Username field,
+,,,Type,Password field,
+,,,Click,Log In to Sandbox button,
+,,,Click,App Launcher icon,
+,,,Type,Search apps box,Service Console
+,,,Click,Service Console from list,
+,,,Click,Search box,
+,,,Click,Search: All dropdown,
+,,,Choose,Search by object type,Cases
+,,,Type,Search box,Use remembered caseId1
+,,,Click,Case from results,Use remembered caseId1
+,,,Click,Details tab,
+,,,Check,Status field shows,New
+,,,Click,Edit Status button,
+,,,Choose,Status dropdown,Resolution Provided
+,,,Choose,Issue dropdown,Billing & Payment Issue
+,,,Choose,Sub Issue dropdown,Billing Setup Broken
+,,,Type,Close Case Comment,Issue Resoloved
+,,,Choose,Close Code dropdown,Interface
+,,,Choose,Close Sub Code dropdown,3rd Party
+,,,Click,Save button,
+,,,Check,Status field shows,Resolution Provided

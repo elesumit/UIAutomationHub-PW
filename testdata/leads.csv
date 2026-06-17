@@ -1,0 +1,2 @@
+row_id,app_name,app_items,salutation,lead_status,lead_source,first_name,last_name,company,email,street,city,state,zip,phone,business_unit,solution_interest,provider_count,status
+1,Sales Console,Leads,Mr.,New,Email,Sumit2,Gupta2,Automation LLC,sumit2.gupta@example.com,123 Main St,Chicago,IL,60601,312-555-0100,Healthcare Providers,Care Gap Closure Services,20,Working
