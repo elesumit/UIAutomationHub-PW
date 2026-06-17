@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Framework Architecture</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .slide {
+            background: white;
+            padding: 40px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            page-break-after: always;
+        }
+        h1 {
+            color: #0066cc;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        pre {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .feature-box {
+            background: #e8f4f8;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .feature-box h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        @media print {
+            .slide {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="slide">
+    <h1>🏗️ Test Automation Framework Architecture</h1>
+    <h2>Veradigm CE Portal & Salesforce Testing</h2>
+    <pre>
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        TEST AUTOMATION FRAMEWORK                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           FEATURE LAYER (BDD)                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│  • Gherkin Feature Files (.feature)                                     │
+│  • Scenario Outlines with Data Tables                                   │
+│  • Tags: @smoke, @regression, @BTC-XX                                   │
+│  • Business-Readable Test Cases                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         STEP DEFINITIONS LAYER                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐│
+│  │ Navigation   │  │ Form Steps   │  │ Verification │  │   Hooks     ││
+│  │   Steps      │  │              │  │    Steps     │  │             ││
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤  ├─────────────┤│
+│  │ • Click      │  │ • Enter Text │  │ • Assert     │  │ • Before    ││
+│  │ • Navigate   │  │ • Select     │  │ • Verify     │  │ • After     ││
+│  │ • Wait       │  │ • Upload     │  │ • Capture    │  │ • Screenshot││
+│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        PAGE OBJECT MODEL (POM)                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                 │
+│  │  CE Portal   │  │  Salesforce  │  │   Common     │                 │
+│  │    Pages     │  │    Pages     │  │   Elements   │                 │
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤                 │
+│  │ • LoginPage  │  │ • LoginPage  │  │ • Buttons    │                 │
+│  │ • CasePage   │  │ • CasePage   │  │ • Inputs     │                 │
+│  │ • SupportPg  │  │ • SearchPage │  │ • Dropdowns  │                 │
+│  └──────────────┘  └──────────────┘  └──────────────┘                 │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           UTILITIES LAYER                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐│
+│  │ LocatorPro   │  │ ReportLogger │  │ ConfigMgr    │  │ DataHelper  ││
+│  │   Wrapper    │  │              │  │              │  │             ││
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤  ├─────────────┤│
+│  │ • Smart      │  │ • Console    │  │ • Env Vars   │  │ • CSV       ││
+│  │   Locators   │  │ • File Logs  │  │ • Profiles   │  │ • JSON      ││
+│  │ • Fallbacks  │  │ • HTML       │  │ • Secrets    │  │ • Excel     ││
+│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        PLAYWRIGHT TEST RUNNER                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│  • Browser Automation (Chromium, Firefox, WebKit)                       │
+│  • Parallel Execution                                                    │
+│  • Auto-waiting & Retry Logic                                           │
+│  • Screenshot & Video Recording                                         │
+│  • Network Interception                                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          REPORTING & CI/CD                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐│
+│  │   HTML       │  │    JUnit     │  │  Cucumber    │  │   GitHub    ││
+│  │   Report     │  │    XML       │  │    JSON      │  │  Artifacts  ││
+│  ├──────────────┤  ├──────────────┤  ├──────────────┤  ├─────────────┤│
+│  │ • Visual     │  │ • Xray       │  │ • Detailed   │  │ • Reports   ││
+│  │ • Interactive│  │   Integration│  │   Steps      │  │ • Logs      ││
+│  │ • Screenshots│  │ • Jira Sync  │  │ • Metrics    │  │ • Videos    ││
+│  └──────────────┘  └──────────────┘  └──────────────┘  └─────────────┘│
+└─────────────────────────────────────────────────────────────────────────┘
+    </pre>
+</div>
+
+<div class="slide">
+    <h1>🔑 Key Framework Features</h1>
+    
+    <div class="feature-box">
+        <h3>1. BDD Framework (Cucumber + Playwright)</h3>
+        <ul>
+            <li>Gherkin syntax for business-readable tests</li>
+            <li>Reusable step definitions</li>
+            <li>Data-driven testing with Scenario Outlines</li>
+            <li>Tag-based test execution (@smoke, @regression)</li>
+        </ul>
+    </div>
+
+    <div class="feature-box">
+        <h3>2. Smart Locator Strategy (LocatorPro)</h3>
+        <ul>
+            <li>Intelligent element detection with multiple fallback strategies</li>
+            <li>Text-based, role-based, and attribute-based locators</li>
+            <li>Automatic retry and wait mechanisms</li>
+            <li>Reduced test flakiness</li>
+        </ul>
+    </div>
+
+    <div class="feature-box">
+        <h3>3. Robust Reporting</h3>
+        <ul>
+            <li>HTML reports with embedded screenshots</li>
+            <li>JUnit XML for CI/CD integration</li>
+            <li>Xray integration for Jira test management</li>
+            <li>Detailed step-by-step execution logs</li>
+        </ul>
+    </div>
+
+    <div class="feature-box">
+        <h3>4. Environment Management</h3>
+        <ul>
+            <li>Multiple environment support (QA, UAT, Production)</li>
+            <li>Secure credential management via GitHub Secrets</li>
+            <li>Profile-based execution (smoke, regression, full)</li>
+            <li>Environment-specific configuration</li>
+        </ul>
+    </div>
+
+    <div class="feature-box">
+        <h3>5. CI/CD Ready</h3>
+        <ul>
+            <li>GitHub Actions integration</li>
+            <li>Slack notifications for test results</li>
+            <li>Automated test execution on PR/merge</li>
+            <li>Parallel test execution support</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

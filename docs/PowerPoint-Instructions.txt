@@ -1,0 +1,81 @@
+INSTRUCTIONS TO CREATE POWERPOINT PRESENTATION
+==============================================
+
+File Created: VeraTest-Pro-Architecture.md (in this same folder)
+
+OPTION 1: Use Online Converter
+-------------------------------
+1. Go to: https://cloudconvert.com/md-to-pptx
+2. Upload: VeraTest-Pro-Architecture.md
+3. Convert to PPTX
+4. Download the result
+
+OPTION 2: Manual Creation in PowerPoint
+----------------------------------------
+Open the VeraTest-Pro-Architecture.md file and create slides based on the sections:
+
+SLIDE 1: Title Slide
+--------------------
+Title: VeraTest Pro Framework Architecture
+Subtitle: Intelligent & Adaptive Test Automation with Playwright + Cucumber + AI-Powered Locator Engine
+
+SLIDE 2: User Inputs
+--------------------
+Title: User Inputs
+Content: Copy the "User Inputs" section with examples
+
+SLIDE 3: Controller
+-------------------
+Title: Controller Components
+Content: Copy the "Controller" section
+
+SLIDE 4: Smart Locator Engine
+------------------------------
+Title: Smart Locator Engine
+Content: 9 Intelligent Locator Strategies + Memory & Healing DB
+
+SLIDE 5: Test Execution
+------------------------
+Title: Test Execution
+Content: Playwright Engine + Browser Support + Execution Features
+
+SLIDE 6: Reporting & Integration
+---------------------------------
+Title: Reporting & Integration
+Content: Reports, Screenshots, CI/CD Integration
+
+SLIDE 7: Key Features
+---------------------
+Title: Key Features
+Content: 4 main categories with bullet points
+
+SLIDE 8: Architecture Flow
+---------------------------
+Title: Architecture Flow
+Content: The flow diagram
+
+SLIDE 9: Technology Stack
+--------------------------
+Title: Technology Stack
+Content: List of technologies
+
+SLIDE 10: Benefits
+------------------
+Title: Benefits
+Content: 8 key benefits
+
+OPTION 3: Install Pandoc (if needed later)
+-------------------------------------------
+If you want to use Pandoc in the future:
+1. Pandoc is already installed at: C:\Program Files\Pandoc
+2. Add to PATH: 
+   - Open System Properties > Environment Variables
+   - Edit PATH variable
+   - Add: C:\Program Files\Pandoc
+   - Restart terminal
+
+Then run:
+pandoc VeraTest-Pro-Architecture.md -o VeraTest-Pro-Architecture.pptx
+
+==============================================
+The markdown file is ready in the docs folder!
