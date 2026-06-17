@@ -69,6 +69,69 @@ resource "azurerm_role_assignment" "swa_dr_kv_read" {
   principal_id         = azurerm_static_web_app.dr.identity[0].principal_id
 }
 
+# =============================================================================
+# Backend (/api/*) secrets — GitHub / Jira / Xray.
+# Stored here and referenced by the Function App via @Microsoft.KeyVault(...)
+# (functions.tf). Values come from var.* (TF_VAR_* from GitHub repo secrets in
+# deploy-infra.yml). The Function App's system-assigned MI gets Key Vault
+# Secrets User scoped PER-SECRET (never vault-wide — agents.md audit finding).
+# =============================================================================
+
+resource "azurerm_key_vault_secret" "github_token" {
+  name         = "github-token"
+  value        = var.github_token
+  key_vault_id = azurerm_key_vault.site.id
+  tags         = var.tags
+}
+
+resource "azurerm_key_vault_secret" "jira_user" {
+  name         = "jira-user"
+  value        = var.jira_user
+  key_vault_id = azurerm_key_vault.site.id
+  tags         = var.tags
+}
+
+resource "azurerm_key_vault_secret" "jira_api_token" {
+  name         = "jira-api-token"
+  value        = var.jira_api_token
+  key_vault_id = azurerm_key_vault.site.id
+  tags         = var.tags
+}
+
+resource "azurerm_key_vault_secret" "xray_client_id" {
+  name         = "xray-client-id"
+  value        = var.xray_client_id
+  key_vault_id = azurerm_key_vault.site.id
+  tags         = var.tags
+}
+
+resource "azurerm_key_vault_secret" "xray_client_secret" {
+  name         = "xray-client-secret"
+  value        = var.xray_client_secret
+  key_vault_id = azurerm_key_vault.site.id
+  tags         = var.tags
+}
+
+# Per-secret Secrets User grants for the Function App MI (read-only, single
+# secret each). The FA MI cannot see other secrets — including the AAD client
+# secret, the highest-value secret in this vault.
+locals {
+  func_kv_secrets = {
+    github_token       = azurerm_key_vault_secret.github_token.resource_versionless_id
+    jira_user          = azurerm_key_vault_secret.jira_user.resource_versionless_id
+    jira_api_token     = azurerm_key_vault_secret.jira_api_token.resource_versionless_id
+    xray_client_id     = azurerm_key_vault_secret.xray_client_id.resource_versionless_id
+    xray_client_secret = azurerm_key_vault_secret.xray_client_secret.resource_versionless_id
+  }
+}
+
+resource "azurerm_role_assignment" "func_kv_read" {
+  for_each             = local.func_kv_secrets
+  scope                = each.value
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_function_app_flex_consumption.app.identity[0].principal_id
+}
+
 output "kv_name" {
   description = "Per-site Key Vault name"
   value       = azurerm_key_vault.site.name

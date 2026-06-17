@@ -21,6 +21,12 @@ provider "azurerm" {
   tenant_id                       = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
   subscription_id                 = "54305029-7d35-40a9-8bf9-950963b449cc" # Neon - Veradigm Tools
   client_id                       = var.mi_client_id
+
+  # REQUIRED with shared_access_key_enabled = false on the FC1 runtime storage
+  # account (storage.tf). Without it the provider's data-plane refresh defaults
+  # to Shared Key and fails with 403 KeyBasedAuthenticationNotPermitted, which
+  # then blocks every subsequent `terraform plan`. See agents.md.
+  storage_use_azuread = true
 }
 
 # Alias provider — Zirconium subscription (dev/stg SWA instances)

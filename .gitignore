@@ -30,3 +30,35 @@ public/
 # Environment
 .env
 .env.local
+
+# --- Secrets / session state (NEVER commit) ---
+.env.*.local
+.env.keys
+*.env.keys
+auth.json
+storage/
+**/storageState.json
+**/storage-state.json
+
+# Playwright / test automation artifacts
+playwright-report/
+blob-report/
+playwright/.cache/
+test-results/
+.features-generated/
+uploads/*
+!uploads/.gitkeep
+allure-results/
+allure-report/
+
+# Misc local
+*.log
+
+# Editor/backup junk
+*.backup
+*.bak
+*.orig
+
+# Azure Functions local dev
+api/local.settings.json
+local.settings.json

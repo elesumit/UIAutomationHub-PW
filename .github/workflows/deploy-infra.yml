@@ -70,6 +70,12 @@ jobs:
           LOG: plan.terraform.log
           TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
           TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+          # Backend (/api/*) secrets — stored in KV by Terraform (keyvault.tf)
+          TF_VAR_github_token: ${{ secrets.API_GITHUB_TOKEN }}
+          TF_VAR_jira_user: ${{ secrets.JIRA_USER }}
+          TF_VAR_jira_api_token: ${{ secrets.JIRA_API_TOKEN }}
+          TF_VAR_xray_client_id: ${{ secrets.XRAY_CLIENT_ID }}
+          TF_VAR_xray_client_secret: ${{ secrets.XRAY_CLIENT_SECRET }}
         run: |
           set -o pipefail
           terraform plan -lock=false -input=false \
@@ -148,6 +154,12 @@ jobs:
           LOG: apply.terraform.log
           TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
           TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+          # Backend (/api/*) secrets — stored in KV by Terraform (keyvault.tf)
+          TF_VAR_github_token: ${{ secrets.API_GITHUB_TOKEN }}
+          TF_VAR_jira_user: ${{ secrets.JIRA_USER }}
+          TF_VAR_jira_api_token: ${{ secrets.JIRA_API_TOKEN }}
+          TF_VAR_xray_client_id: ${{ secrets.XRAY_CLIENT_ID }}
+          TF_VAR_xray_client_secret: ${{ secrets.XRAY_CLIENT_SECRET }}
         run: |
           set -o pipefail
           terraform apply -input=false -auto-approve \
