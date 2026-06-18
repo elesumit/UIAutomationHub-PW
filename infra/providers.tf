@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 4.0.0, < 5.0.0"
     }
+    azapi = {
+      source  = "Azure/azapi"
+      version = ">= 2.0.0, < 3.0.0"
+    }
   }
 }
 
@@ -27,6 +31,17 @@ provider "azurerm" {
   # to Shared Key and fails with 403 KeyBasedAuthenticationNotPermitted, which
   # then blocks every subsequent `terraform plan`. See agents.md.
   storage_use_azuread = true
+}
+
+# azapi provider — used for the AzureWebJobsStorage strip chain (functions.tf).
+# It does NOT inherit the azurerm provider's auth, so it needs its own OIDC config;
+# without it azapi falls back to Azure CLI and fails with "please run az login" on
+# the runner.
+provider "azapi" {
+  use_oidc        = true
+  tenant_id       = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
+  subscription_id = "54305029-7d35-40a9-8bf9-950963b449cc"
+  client_id       = var.mi_client_id
 }
 
 # Alias provider — Zirconium subscription (dev/stg SWA instances)

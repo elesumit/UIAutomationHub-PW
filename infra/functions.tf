@@ -107,6 +107,44 @@ resource "azurerm_role_assignment" "func_runtime_table" {
   principal_id         = azurerm_function_app_flex_consumption.app.identity[0].principal_id
 }
 
+# ── Strip the platform-injected keyless AzureWebJobsStorage (fleet standard) ──
+# The FC1 host authenticates to runtime storage via MI
+# (AzureWebJobsStorage__accountName + __credential=managedidentity). Azure injects a
+# plain AzureWebJobsStorage connection string with an empty AccountKey that overrides
+# the MI path with AuthenticationFailed (agents.md). This read-then-strip chain re-writes
+# the app settings on every apply with that one key removed — preserving everything else
+# (APPLICATIONINSIGHTS_CONNECTION_STRING, the __accountName/__credential pair, etc.).
+# Matches the template's infra/functions.tf.
+resource "azapi_resource_action" "read_app_settings" {
+  type                   = "Microsoft.Web/sites@2024-04-01"
+  resource_id            = azurerm_function_app_flex_consumption.app.id
+  action                 = "config/appsettings/list"
+  method                 = "POST"
+  response_export_values = ["properties"]
+  lifecycle {
+    replace_triggered_by = [azurerm_function_app_flex_consumption.app]
+  }
+}
+
+resource "azapi_update_resource" "strip_webjobs_storage" {
+  type        = "Microsoft.Web/sites/config@2024-04-01"
+  resource_id = "${azurerm_function_app_flex_consumption.app.id}/config/appsettings"
+  body = {
+    properties = {
+      for k, v in azapi_resource_action.read_app_settings.output.properties :
+      k => v if k != "AzureWebJobsStorage"
+    }
+  }
+  depends_on = [
+    azurerm_role_assignment.func_runtime_blob,
+    azurerm_role_assignment.func_runtime_queue,
+    azurerm_role_assignment.func_runtime_table,
+  ]
+  lifecycle {
+    replace_triggered_by = [azapi_resource_action.read_app_settings]
+  }
+}
+
 # ── Link the Function App as the primary SWA's backend (serves /api/*) ──
 # Routes /api/* through the SWA under the existing Entra auth + custom domain.
 # Single-region (primary). DR SWA serves static content only on failover; API

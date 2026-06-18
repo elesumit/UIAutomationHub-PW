@@ -255,31 +255,9 @@ jobs:
       # to app-staticweb-sso in Azure Portal → App registrations → Authentication.
       # Requires Global Admin for automated Graph API access, so this remains manual.
 
-      # Strip the platform-injected keyless AzureWebJobsStorage from the Function App.
-      # The FC1 host authenticates to runtime storage via MI
-      # (AzureWebJobsStorage__accountName + __credential=managedidentity). Azure
-      # occasionally injects a plain AzureWebJobsStorage connection string with an
-      # empty AccountKey that overrides the MI path with AuthenticationFailed
-      # (agents.md gotcha). Remove it if present — surgical per-key delete, so it
-      # never touches APPLICATIONINSIGHTS_CONNECTION_STRING or other managed
-      # settings (which a full app-settings replace would wipe). No-op if absent.
-      - name: Strip keyless AzureWebJobsStorage from Function App
-        run: |
-          FUNC_NAME=$(terraform output -raw function_app_name 2>/dev/null || echo "")
-          if [ -z "$FUNC_NAME" ]; then
-            echo "No function_app_name output — skipping"
-            exit 0
-          fi
-          RG=$(python3 -c "import json; print(json.load(open('terraform.tfvars.json'))['resource_group'])")
-          HAS=$(az functionapp config appsettings list --name "$FUNC_NAME" --resource-group "$RG" \
-            --query "[?name=='AzureWebJobsStorage'] | length(@)" -o tsv 2>/dev/null || echo "0")
-          if [ "$HAS" != "0" ]; then
-            az functionapp config appsettings delete --name "$FUNC_NAME" --resource-group "$RG" \
-              --setting-names AzureWebJobsStorage -o none
-            echo "Removed keyless AzureWebJobsStorage from $FUNC_NAME"
-          else
-            echo "No plain AzureWebJobsStorage present — nothing to strip"
-          fi
+      # NOTE: the keyless AzureWebJobsStorage strip is handled declaratively in
+      # infra/functions.tf (azapi read-then-strip chain), per the fleet standard —
+      # no workflow step needed.
 
       # Extract SWA deployment tokens and set as repo secrets after apply
       - name: Set SWA deployment tokens
