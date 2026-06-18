@@ -70,6 +70,12 @@ jobs:
           LOG: plan.terraform.log
           TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
           TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+          # Backend (/api/*) secrets — stored in KV by Terraform (keyvault.tf)
+          TF_VAR_github_token: ${{ secrets.API_GITHUB_TOKEN }}
+          TF_VAR_jira_user: ${{ secrets.JIRA_USER }}
+          TF_VAR_jira_api_token: ${{ secrets.JIRA_API_TOKEN }}
+          TF_VAR_xray_client_id: ${{ secrets.XRAY_CLIENT_ID }}
+          TF_VAR_xray_client_secret: ${{ secrets.XRAY_CLIENT_SECRET }}
         run: |
           set -o pipefail
           terraform plan -lock=false -input=false \
@@ -148,6 +154,12 @@ jobs:
           LOG: apply.terraform.log
           TF_VAR_aad_client_id: ${{ secrets.AAD_CLIENT_ID }}
           TF_VAR_aad_client_secret: ${{ secrets.AAD_CLIENT_SECRET }}
+          # Backend (/api/*) secrets — stored in KV by Terraform (keyvault.tf)
+          TF_VAR_github_token: ${{ secrets.API_GITHUB_TOKEN }}
+          TF_VAR_jira_user: ${{ secrets.JIRA_USER }}
+          TF_VAR_jira_api_token: ${{ secrets.JIRA_API_TOKEN }}
+          TF_VAR_xray_client_id: ${{ secrets.XRAY_CLIENT_ID }}
+          TF_VAR_xray_client_secret: ${{ secrets.XRAY_CLIENT_SECRET }}
         run: |
           set -o pipefail
           terraform apply -input=false -auto-approve \
@@ -242,6 +254,10 @@ jobs:
       # After deploy, add https://<site_name>.internal.veradigm.com/.auth/login/aad/callback
       # to app-staticweb-sso in Azure Portal → App registrations → Authentication.
       # Requires Global Admin for automated Graph API access, so this remains manual.
+
+      # NOTE: the keyless AzureWebJobsStorage strip is handled declaratively in
+      # infra/functions.tf (azapi read-then-strip chain), per the fleet standard —
+      # no workflow step needed.
 
       # Extract SWA deployment tokens and set as repo secrets after apply
       - name: Set SWA deployment tokens

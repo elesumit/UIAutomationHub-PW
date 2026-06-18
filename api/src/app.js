@@ -1,0 +1,681 @@
+/**
+ * Automation Hub backend — Azure Functions (v4 programming model, FC1).
+ *
+ * Ported from tools/ai-test-generator/server.js (Express). Stateless: talks only
+ * to GitHub Models, GitHub REST, Jira, and Xray. No local persistence — the
+ * Express `/api/save-to-local` is re-pointed at the GitHub commit path because a
+ * Function App filesystem is ephemeral.
+ *
+ * Routes are exposed under /api/* (Functions default prefix) and reached through
+ * the SWA linked-backend registration under the site's Entra auth.
+ */
+const { app } = require('@azure/functions');
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
+const GITHUB_TOKEN = process.env.GITHUB_COPILOT_TOKEN || process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
+const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
+const XRAY_BASE = 'https://xray.cloud.getxray.app/api/v2';
+// Branch that save-to-github / upload-to-jira-github commit to. Defaults to main
+// (legacy behaviour); set GITHUB_TARGET_BRANCH to a non-default branch to avoid
+// authenticated users writing straight to main (see api/README.md security note).
+const GITHUB_TARGET_BRANCH = process.env.GITHUB_TARGET_BRANCH || 'main';
+
+// ──────────────────────────── helpers ────────────────────────────
+
+/** Read bundled sample feature files for LLM prompt context (replaces the
+ *  Express read of ../../features which doesn't exist in the Function App). */
+function getTestExamples() {
+  const samplesDir = path.join(__dirname, '..', 'samples');
+  const examples = [];
+  try {
+    const files = fs.readdirSync(samplesDir).filter((f) => f.endsWith('.feature'));
+    for (let i = 0; i < Math.min(2, files.length); i++) {
+      examples.push(fs.readFileSync(path.join(samplesDir, files[i]), 'utf-8').substring(0, 1000));
+    }
+  } catch (err) {
+    // Non-fatal — prompt still works without examples.
+  }
+  return examples;
+}
+
+function buildSystemPrompt() {
+  const examples = getTestExamples();
+  return `You are an expert test automation engineer for the CE Portal and Salesforce applications.
+
+**Application Context:**
+- CE Portal: Customer Experience Portal where support agents create and manage cases
+- Salesforce: CRM system for case verification and updates (backend system)
+- Support agents work in CE Portal, NOT in Salesforce
+- Common fields: Product, Account, Impact, Subject, Description, Contact Method, Case Collaborators
+- Mandatory fields: Product, Account, Impact, Subject
+
+**Available Step Definitions:**
+- When I click on "<element>"
+- When I check the checkbox "<checkbox_label>"
+- When I uncheck the checkbox "<checkbox_label>"
+- When I enter "<text>" in "<field>"
+- When I select "<option>" from "<dropdown>"
+- When I navigate to <application> "<url>"
+- When I wait for <seconds> seconds
+- Then I see error message "<message>"
+- Then the field "<field_name>" should be mandatory
+- Then I should see error banner with text "<error_text>"
+
+**CRITICAL: CE Portal Login and Case Creation Pattern (MUST USE EXACTLY):**
+Always use empty strings for credentials (values come from environment variables):
+
+Background: Login to CE Portal
+  Given I navigate to CE Portal ""
+  When I click on "Log in"
+  When I wait for 3 seconds
+  When I enter "" in "CE_UserName"
+  When I click on "Continue"
+  When I enter "" in "CE_Password"
+  When I click on "Continue"
+  When I wait for 3 seconds
+  When I click on "Support"
+  When I wait for 3 seconds
+  When I enter "Portal" in "Search for help"
+  When I wait for 3 seconds
+  When I click on "Create a Case"
+
+DO NOT use hardcoded credentials. The empty strings "" are replaced by environment variables at runtime.
+
+**Example Test Structure:**
+${examples.length > 0 ? examples[0] : 'No examples available'}
+
+**Tagging Requirements (CRITICAL):**
+1. Feature-level tags: ONLY descriptive test type tags (@ErrorValidation, @HappyPath, @E2E, @CaseCreation, @PatientSafety). DO NOT add @JIRA_PLACEHOLDER on the Feature line.
+2. Scenario-level tags: Add @JIRA_PLACEHOLDER_N on EACH Scenario line (N = 1, 2, 3, ...). These are replaced with real Jira keys (e.g., @BTC-101).
+3. DO NOT tag the Background section.
+
+**Your Task:**
+Generate detailed Gherkin test scenarios based on user descriptions, following the patterns above. Use realistic test data. Include a Background only if login is needed (Login → Support → Search → Create a Case flow). Each scenario must have a unique @JIRA_PLACEHOLDER_N tag.`;
+}
+
+async function xrayAuthenticate() {
+  const XRAY_CLIENT_ID = process.env.XRAY_CLIENT_ID;
+  const XRAY_CLIENT_SECRET = process.env.XRAY_CLIENT_SECRET;
+  if (!XRAY_CLIENT_ID || !XRAY_CLIENT_SECRET) {
+    throw new Error('Xray credentials not configured');
+  }
+  const res = await fetch(`${XRAY_BASE}/authenticate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ client_id: XRAY_CLIENT_ID, client_secret: XRAY_CLIENT_SECRET }),
+  });
+  if (!res.ok) throw new Error('Failed to authenticate with Xray');
+  return (await res.text()).replace(/"/g, '');
+}
+
+function jiraAuthHeader() {
+  const JIRA_USER = process.env.JIRA_USER;
+  const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
+  if (!JIRA_USER || !JIRA_API_TOKEN) throw new Error('Jira credentials not configured');
+  return 'Basic ' + Buffer.from(`${JIRA_USER}:${JIRA_API_TOKEN}`).toString('base64');
+}
+
+async function octokitClient() {
+  const { Octokit } = await import('@octokit/rest');
+  return new Octokit({ auth: GITHUB_TOKEN });
+}
+
+/** Create or update features/<filename> on the default branch. */
+async function commitFeatureToGitHub(filename, content, message) {
+  const octokit = await octokitClient();
+  const filePath = `features/${filename}`;
+  let sha;
+  try {
+    const { data } = await octokit.repos.getContent({ owner: GITHUB_OWNER, repo: GITHUB_REPO, path: filePath, ref: GITHUB_TARGET_BRANCH });
+    sha = data.sha;
+  } catch (_) {
+    /* file doesn't exist yet */
+  }
+  await octokit.repos.createOrUpdateFileContents({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    path: filePath,
+    message,
+    content: Buffer.from(content).toString('base64'),
+    sha,
+    branch: GITHUB_TARGET_BRANCH,
+  });
+  return filePath;
+}
+
+const json = (status, body) => ({ status, jsonBody: body });
+
+// ──────────────────────────── routes ────────────────────────────
+
+app.http('health', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'health',
+  handler: async () =>
+    json(200, { status: 'ok', copilotConfigured: !!GITHUB_TOKEN, repo: `${GITHUB_OWNER}/${GITHUB_REPO}` }),
+});
+
+app.http('generate', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'generate',
+  handler: async (request, context) => {
+    try {
+      const { description, application, testType } = await request.json();
+      if (!description) return json(400, { error: 'Description is required' });
+      if (!GITHUB_TOKEN) return json(500, { error: 'GitHub Copilot token not configured (GITHUB_COPILOT_TOKEN)' });
+
+      const isPatientSafety = /patient safety|checkbox|is this a patient/i.test(description);
+      const scenarioCount = isPatientSafety ? '10-15' : '5-8';
+
+      const userPrompt = `Generate Gherkin test scenarios for:
+"${description}"
+
+Application: ${application || 'CE Portal and Salesforce'}
+Test Type: ${testType || 'General'}
+
+Requirements:
+- You MUST generate at least ${scenarioCount} distinct test scenarios.
+- Use @JIRA_PLACEHOLDER_N tags on each scenario (N = 1, 2, 3...).
+- Add appropriate descriptive @tags on the Feature line only.
+- Use realistic test data and cover edge cases and validation rules.
+- Background MUST include: Login → Support → Search → Create a Case → Fill mandatory fields.
+
+Output only the Feature file content, no explanations.`;
+
+      const response = await axios.post(
+        'https://models.inference.ai.azure.com/chat/completions',
+        {
+          messages: [
+            { role: 'system', content: buildSystemPrompt() },
+            { role: 'user', content: userPrompt },
+          ],
+          model: 'gpt-4o',
+          temperature: 0.2,
+          max_tokens: 8000,
+          top_p: 1.0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json',
+            'extra-parameters': 'pass-through',
+          },
+          timeout: 120000,
+        }
+      );
+
+      const content = response.data.choices[0].message.content
+        .replace(/```gherkin\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+
+      return json(200, {
+        success: true,
+        content,
+        metadata: { model: 'gpt-4o', application: application || 'Both', testType: testType || 'General' },
+      });
+    } catch (error) {
+      context.error('generate failed:', error.response?.data || error.message);
+      return json(500, { error: 'Failed to generate test cases', details: error.response?.data?.error?.message || error.message });
+    }
+  },
+});
+
+// In the cloud there is no local framework checkout — "save to local" persists
+// to the GitHub repo's features/ folder (same destination as save-to-github).
+app.http('save-to-local', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'save-to-local',
+  handler: async (request, context) => {
+    try {
+      const { content, filename } = await request.json();
+      if (!content || !filename) return json(400, { error: 'Content and filename are required' });
+      if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
+      const filePath = await commitFeatureToGitHub(filename, content, `Add AI-generated test: ${filename}`);
+      return json(200, { success: true, path: filePath, message: 'Feature file committed to the framework repo' });
+    } catch (error) {
+      context.error('save-to-local failed:', error.message);
+      return json(500, { error: 'Failed to save feature file', details: error.message });
+    }
+  },
+});
+
+app.http('save-to-github', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'save-to-github',
+  handler: async (request, context) => {
+    try {
+      const { content, filename } = await request.json();
+      if (!content || !filename) return json(400, { error: 'Content and filename are required' });
+      if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
+      const filePath = await commitFeatureToGitHub(filename, content, `Add AI-generated test: ${filename}`);
+      return json(200, {
+        success: true,
+        message: 'Test case saved to GitHub',
+        path: filePath,
+        url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${filePath}`,
+      });
+    } catch (error) {
+      context.error('save-to-github failed:', error.message);
+      return json(500, { error: 'Failed to save to GitHub', details: error.message });
+    }
+  },
+});
+
+app.http('fetch-test-cases', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'fetch-test-cases',
+  handler: async (request, context) => {
+    try {
+      const token = await xrayAuthenticate();
+      const graphqlQuery = {
+        query: `{
+          getTestPlans(jql: "key = BTC-104", limit: 1) {
+            results {
+              issueId
+              jira(fields: ["key", "summary"])
+              tests(limit: 100) { results { issueId jira(fields: ["key", "summary"]) } }
+            }
+          }
+        }`,
+      };
+      const res = await fetch(`${XRAY_BASE}/graphql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(graphqlQuery),
+      });
+      if (!res.ok) throw new Error(`Failed to fetch test cases: ${await res.text()}`);
+      const result = await res.json();
+      const testPlan = result.data?.getTestPlans?.results?.[0];
+      if (!testPlan) return json(200, { testCases: [] });
+      const testCases = testPlan.tests.results.map((t) => ({ key: t.jira.key, summary: t.jira.summary }));
+      return json(200, { testCases });
+    } catch (error) {
+      context.error('fetch-test-cases failed:', error.message);
+      return json(500, { error: 'Failed to fetch test cases', details: error.message });
+    }
+  },
+});
+
+app.http('jira-issue-types', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'jira-issue-types',
+  handler: async (request, context) => {
+    try {
+      const response = await axios.get(`${JIRA_BASE_URL}/rest/api/3/project/BTC`, {
+        headers: { Authorization: jiraAuthHeader(), 'Content-Type': 'application/json' },
+      });
+      return json(200, { issueTypes: response.data.issueTypes });
+    } catch (error) {
+      context.error('jira-issue-types failed:', error.message);
+      return json(500, { error: error.message });
+    }
+  },
+});
+
+app.http('jira-story', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'jira/story/{storyId}',
+  handler: async (request, context) => {
+    const storyId = request.params.storyId;
+    try {
+      const response = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/${storyId}`, {
+        headers: { Authorization: jiraAuthHeader(), Accept: 'application/json' },
+      });
+      const issue = response.data;
+
+      const extractTextFromADF = (adf) => {
+        if (!adf) return '';
+        let text = '';
+        const traverse = (node) => {
+          if (node.type === 'text') text += node.text + ' ';
+          else if (node.type === 'hardBreak') text += '\n';
+          if (node.content) node.content.forEach(traverse);
+        };
+        if (adf.content) traverse(adf);
+        return text.trim();
+      };
+
+      const parseAcceptanceCriteria = (text) => {
+        if (!text) return ['Use the description to generate test scenarios'];
+        const lines = text.split('\n');
+        const gwt = [];
+        let cur = { given: '', when: '', then: '' };
+        for (const raw of lines) {
+          const line = raw.trim();
+          if (/^Given/i.test(line)) {
+            if (cur.given && cur.when && cur.then) gwt.push(`Given ${cur.given}, When ${cur.when}, Then ${cur.then}`);
+            cur = { given: line.replace(/^Given\s*/i, '').trim(), when: '', then: '' };
+          } else if (/^When/i.test(line)) cur.when = line.replace(/^When\s*/i, '').trim();
+          else if (/^Then/i.test(line)) cur.then = line.replace(/^Then\s*/i, '').trim();
+        }
+        if (cur.given && cur.when && cur.then) gwt.push(`Given ${cur.given}, When ${cur.when}, Then ${cur.then}`);
+        if (gwt.length) return gwt;
+        const sentences = text.split(/[.!?]\s+/).filter((s) => s.trim().length > 20);
+        return sentences.length ? sentences.slice(0, 5).map((s) => s.trim()) : ['Use the full description to generate scenarios'];
+      };
+
+      const description = issue.fields.description ? extractTextFromADF(issue.fields.description) : 'No description available';
+      return json(200, {
+        key: issue.key,
+        summary: issue.fields.summary,
+        description,
+        issueType: issue.fields.issuetype.name,
+        status: issue.fields.status.name,
+        priority: issue.fields.priority?.name || 'Not set',
+        acceptanceCriteria: parseAcceptanceCriteria(description),
+        components: issue.fields.components?.map((c) => c.name) || [],
+        labels: issue.fields.labels || [],
+        assignee: issue.fields.assignee?.displayName || 'Unassigned',
+      });
+    } catch (error) {
+      if (error.response?.status === 404) return json(404, { error: 'Story not found', details: `Story ${storyId} does not exist or you don't have access` });
+      if (error.response?.status === 401) return json(401, { error: 'Authentication failed', details: 'Invalid Jira credentials' });
+      context.error('jira-story failed:', error.message);
+      return json(500, { error: 'Failed to fetch Jira story', details: error.message });
+    }
+  },
+});
+
+app.http('upload-to-jira-github', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'upload-to-jira-github',
+  handler: async (request, context) => {
+    try {
+      const { content, filename } = await request.json();
+      if (!content) return json(400, { error: 'Feature file content is required' });
+      const token = await xrayAuthenticate();
+
+      const featureMatch = content.match(/Feature:\s*(.+)/);
+      const featureSummary = featureMatch ? featureMatch[1].trim() : 'AI Generated Test Case';
+
+      const FormData = require('form-data');
+      const formData = new FormData();
+      formData.append('file', Buffer.from(content, 'utf-8'), { filename: 'test.feature', contentType: 'text/plain' });
+
+      const importResponse = await axios.post(`${XRAY_BASE}/import/feature?projectKey=BTC`, formData, {
+        headers: { Authorization: `Bearer ${token}`, ...formData.getHeaders() },
+        validateStatus: () => true,
+      });
+      if (importResponse.status !== 200) {
+        throw new Error(`Xray Import Error (${importResponse.status}): ${importResponse.data?.error || JSON.stringify(importResponse.data)}`);
+      }
+
+      const result = importResponse.data;
+      const testKeys = (result.updatedOrCreatedTests || []).map((t) => t.key);
+      const testIds = (result.updatedOrCreatedTests || []).map((t) => t.id);
+      const preconditionKeys = (result.updatedOrCreatedPreconditions || []).map((p) => p.key);
+      if (testKeys.length === 0) throw new Error('No test cases created by Xray');
+      const mainTestKey = testKeys[0];
+
+      // Replace placeholders with actual Jira keys.
+      let updatedContent = content.replace(/@JIRA_PLACEHOLDER(?!_)/g, `@${mainTestKey}`);
+      testKeys.forEach((key, index) => {
+        updatedContent = updatedContent.replace(new RegExp(`@JIRA_PLACEHOLDER_${index + 1}\\b`, 'g'), `@${key}`);
+      });
+
+      // Link tests to Test Plan BTC-104.
+      if (testIds.length > 0) {
+        try {
+          const issueResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/BTC-104`, {
+            headers: { Authorization: jiraAuthHeader(), 'Content-Type': 'application/json' },
+          });
+          const testPlanId = issueResponse.data.id;
+          await fetch(`${XRAY_BASE}/graphql`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              query: `mutation AddTestsToTestPlan($issueId: String!, $testIssueIds: [String]!) {
+                addTestsToTestPlan(issueId: $issueId, testIssueIds: $testIssueIds) { addedTests warning }
+              }`,
+              variables: { issueId: String(testPlanId), testIssueIds: testIds.map(String) },
+            }),
+          });
+        } catch (linkError) {
+          context.warn(`Linking to BTC-104 failed: ${linkError.message}`);
+        }
+      }
+
+      // Persist the key-substituted feature to the framework repo.
+      let githubUrl = null;
+      try {
+        const filePath = await commitFeatureToGitHub(filename, updatedContent, `Add test case ${mainTestKey}: ${featureSummary}`);
+        githubUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${filePath}`;
+      } catch (githubError) {
+        context.warn(`GitHub upload failed: ${githubError.message}`);
+      }
+
+      return json(200, {
+        success: true,
+        testKey: mainTestKey,
+        allTestKeys: [...testKeys, ...preconditionKeys],
+        summary: featureSummary,
+        jiraUrl: `${JIRA_BASE_URL}/browse/${mainTestKey}`,
+        githubUrl,
+        message: `Test Case(s) created: ${[...testKeys, ...preconditionKeys].join(', ')} — linked to BTC-104`,
+      });
+    } catch (error) {
+      context.error('upload-to-jira-github failed:', error.message);
+      return json(500, { error: 'Failed to upload to Jira/GitHub', details: error.message });
+    }
+  },
+});
+
+app.http('create-test-execution', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'create-test-execution',
+  handler: async (request, context) => {
+    try {
+      const { testKeys, summary } = await request.json();
+      if (!testKeys || testKeys.length === 0) return json(400, { error: 'Test keys are required' });
+      const token = await xrayAuthenticate();
+      const authHeader = jiraAuthHeader();
+
+      const testIssueIds = [];
+      for (const testKey of testKeys) {
+        const issueResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/${testKey}`, {
+          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        });
+        testIssueIds.push(issueResponse.data.id);
+      }
+
+      const createResponse = await fetch(`${XRAY_BASE}/graphql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          query: `mutation CreateTestExecution($testIssueIds: [String]!, $jira: JSON!) {
+            createTestExecution(testIssueIds: $testIssueIds, jira: $jira) {
+              testExecution { issueId jira(fields: ["key"]) } warnings
+            }
+          }`,
+          variables: {
+            testIssueIds: testIssueIds.map(String),
+            jira: {
+              fields: {
+                project: { key: 'BTC' },
+                summary: summary || `Test Execution - ${new Date().toISOString()}`,
+                issuetype: { name: 'Test Execution' },
+              },
+            },
+          },
+        }),
+      });
+      const createResult = await createResponse.json();
+      if (createResult.errors?.length) throw new Error(`GraphQL Error: ${createResult.errors.map((e) => e.message).join(', ')}`);
+      const testExecution = createResult.data?.createTestExecution?.testExecution;
+      if (!testExecution) throw new Error('No test execution returned from GraphQL mutation');
+      const testExecutionKey = testExecution.jira.key;
+      const testExecutionId = testExecution.issueId;
+
+      // Link execution to Test Plan BTC-104.
+      try {
+        const testPlanResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/BTC-104`, {
+          headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        });
+        await fetch(`${XRAY_BASE}/graphql`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            query: `mutation AddExecToPlan($issueId: String!, $testExecIssueIds: [String]!) {
+              addTestExecutionsToTestPlan(issueId: $issueId, testExecIssueIds: $testExecIssueIds) { addedTestExecutions warning }
+            }`,
+            variables: { issueId: String(testPlanResponse.data.id), testExecIssueIds: [String(testExecutionId)] },
+          }),
+        });
+      } catch (linkError) {
+        context.warn(`Failed to link execution to BTC-104: ${linkError.message}`);
+      }
+
+      return json(200, {
+        success: true,
+        testExecutionKey,
+        jiraUrl: `${JIRA_BASE_URL}/browse/${testExecutionKey}`,
+        message: 'Test Execution created successfully',
+      });
+    } catch (error) {
+      context.error('create-test-execution failed:', error.message);
+      const isTestNotFound = /not found|does not exist|400/.test(error.message);
+      return json(500, {
+        error: 'Failed to create Test Execution',
+        details: error.message,
+        suggestion: isTestNotFound
+          ? 'The BTC-XXX test keys in your feature file do not exist in Jira. Create them first, or remove the @BTC-XXX tags.'
+          : 'Check Xray credentials and API access.',
+      });
+    }
+  },
+});
+
+app.http('execute-test', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'execute-test',
+  handler: async (request, context) => {
+    try {
+      const { testExecutionKey, testProfile } = await request.json();
+      if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
+      const octokit = await octokitClient();
+
+      await octokit.repos.createDispatchEvent({
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        event_type: 'xray-trigger',
+        client_payload: { test_execution_key: testExecutionKey, test_plan_key: 'BTC-104', test_profile: testProfile || 'smoke' },
+      });
+
+      // Best-effort: resolve the freshly-created workflow run id.
+      let workflowUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions`;
+      let runId = null;
+      const triggerTime = Date.now();
+      try {
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          await new Promise((r) => setTimeout(r, 3000 * attempt));
+          const runs = await octokit.actions.listWorkflowRunsForRepo({ owner: GITHUB_OWNER, repo: GITHUB_REPO, per_page: 10, event: 'repository_dispatch' });
+          const recent = runs.data.workflow_runs?.find((run) => Math.abs((new Date(run.created_at).getTime() - triggerTime) / 1000) < 30);
+          if (recent) {
+            runId = recent.id;
+            workflowUrl = recent.html_url;
+            break;
+          }
+        }
+        if (!runId) {
+          const runs = await octokit.actions.listWorkflowRunsForRepo({ owner: GITHUB_OWNER, repo: GITHUB_REPO, per_page: 1, event: 'repository_dispatch' });
+          if (runs.data.workflow_runs?.length) {
+            runId = runs.data.workflow_runs[0].id;
+            workflowUrl = runs.data.workflow_runs[0].html_url;
+          }
+        }
+      } catch (e) {
+        context.warn(`Could not fetch workflow run id: ${e.message}`);
+      }
+
+      return json(200, { success: true, message: 'Test execution triggered', testExecutionKey, workflowUrl, runId });
+    } catch (error) {
+      context.error('execute-test failed:', error.message);
+      return json(500, { error: 'Failed to trigger test execution', details: error.message });
+    }
+  },
+});
+
+app.http('check-workflow-status', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'check-workflow-status',
+  handler: async (request, context) => {
+    try {
+      const runId = request.query.get('runId');
+      if (!runId) return json(400, { error: 'Run ID is required' });
+      const response = await axios.get(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}`, {
+        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Veradigm-Automation-Hub' },
+        validateStatus: (s) => s < 500,
+      });
+      if (response.status === 404 || response.status !== 200) {
+        // Keep the client polling.
+        return json(200, { status: 'in_progress', conclusion: null, html_url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}` });
+      }
+      return json(200, { status: response.data.status, conclusion: response.data.conclusion, html_url: response.data.html_url });
+    } catch (error) {
+      context.error('check-workflow-status failed:', error.message);
+      return json(200, { status: 'in_progress', conclusion: null, error: error.message });
+    }
+  },
+});
+
+app.http('get-test-report', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'get-test-report',
+  handler: async (request, context) => {
+    try {
+      const runId = request.query.get('runId');
+      if (!runId) return json(400, { error: 'Run ID is required' });
+      const octokit = await octokitClient();
+
+      const artifacts = await octokit.actions.listWorkflowRunArtifacts({ owner: GITHUB_OWNER, repo: GITHUB_REPO, run_id: Number(runId) });
+      const reportArtifact = artifacts.data.artifacts.find((a) => a.name.includes('cucumber-reports') || a.name.includes('test-results'));
+      if (!reportArtifact) return json(404, { error: 'Report not available', details: 'Test report artifact not found. Tests may still be running.' });
+
+      const download = await octokit.actions.downloadArtifact({ owner: GITHUB_OWNER, repo: GITHUB_REPO, artifact_id: reportArtifact.id, archive_format: 'zip' });
+      const AdmZip = require('adm-zip');
+      const zip = new AdmZip(Buffer.from(download.data));
+      const entries = zip.getEntries();
+
+      let htmlEntry =
+        entries.find((e) => e.entryName.includes('enhanced-report/index.html')) ||
+        entries.find((e) => e.entryName.includes('cucumber-report.html')) ||
+        entries.find((e) => e.entryName.endsWith('.html'));
+      if (!htmlEntry) return json(404, { error: 'Report file not found in artifact' });
+
+      let reportHtml = htmlEntry.getData().toString('utf8');
+      if (htmlEntry.entryName.includes('enhanced-report/index.html')) {
+        entries
+          .filter((e) => e.entryName.includes('enhanced-report/'))
+          .forEach((e) => {
+            const fileName = e.entryName.split('/').pop();
+            if (e.entryName.endsWith('.css')) {
+              reportHtml = reportHtml.replace(new RegExp(`<link[^>]*href=["'].*${fileName}["'][^>]*>`, 'g'), `<style>${e.getData().toString('utf8')}</style>`);
+            } else if (e.entryName.endsWith('.js')) {
+              reportHtml = reportHtml.replace(new RegExp(`<script[^>]*src=["'].*${fileName}["'][^>]*></script>`, 'g'), `<script>${e.getData().toString('utf8')}</script>`);
+            }
+          });
+      }
+
+      return { status: 200, headers: { 'Content-Type': 'text/html' }, body: reportHtml };
+    } catch (error) {
+      context.error('get-test-report failed:', error.message);
+      return json(500, { error: 'Failed to fetch test report', details: error.message });
+    }
+  },
+});

@@ -90,6 +90,78 @@ variable "aad_client_secret" {
   sensitive   = true
 }
 
+# ── Function App backend (/api/*) ──
+# The Automation Hub backend is a stateless proxy to GitHub / Jira / Xray. These
+# values are stored as Key Vault secrets (keyvault.tf) and referenced by the
+# Function App via @Microsoft.KeyVault(...). Passed in as TF_VAR_* from GitHub
+# repo secrets in deploy-infra.yml. Defaults keep `terraform plan` working on PRs
+# (where the secrets are not injected) — real values are only needed on apply.
+
+variable "github_token" {
+  description = "GitHub PAT used by the backend for Copilot/Models + repo dispatch + artifact download (GITHUB_COPILOT_TOKEN/GITHUB_TOKEN)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "github_owner" {
+  description = "GitHub org/owner of the test-automation repo the backend dispatches to"
+  type        = string
+  default     = "veradigm-project-atlas"
+}
+
+variable "github_repo" {
+  description = "GitHub repo the backend dispatches workflows to / commits features to"
+  type        = string
+  default     = "Testing-Automation-PlayWright"
+}
+
+variable "github_target_branch" {
+  description = "Branch the backend commits generated feature files to. Default main (legacy); set to a non-default branch to keep authenticated users from writing straight to main."
+  type        = string
+  default     = "main"
+}
+
+variable "jira_user" {
+  description = "Jira account email for Basic auth (JIRA_USER)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "jira_api_token" {
+  description = "Jira API token (JIRA_API_TOKEN)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "jira_base_url" {
+  description = "Jira base URL"
+  type        = string
+  default     = "https://veradigm.atlassian.net"
+}
+
+variable "xray_client_id" {
+  description = "Xray Cloud client id (XRAY_CLIENT_ID)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "xray_client_secret" {
+  description = "Xray Cloud client secret (XRAY_CLIENT_SECRET)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "function_runtime_version" {
+  description = "Node.js runtime version for the Function App"
+  type        = string
+  default     = "20"
+}
+
 # ── Optional overrides ──
 
 variable "log_analytics_workspace_id" {

@@ -1,0 +1,19 @@
+{
+  "name": "automation-hub-api",
+  "version": "1.0.0",
+  "description": "Automation Hub backend (/api/*) — Azure Functions (FC1). Stateless proxy to GitHub Models, GitHub REST, Jira, and Xray.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "@octokit/rest": "^20.1.1",
+    "adm-zip": "^0.5.16",
+    "axios": "^1.7.7",
+    "form-data": "^4.0.1"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.x"
+  }
+}

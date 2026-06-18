@@ -34,6 +34,7 @@ public/
 .env.keys
 *.env.keys
 auth.json
+
 # Playwright auth/session state (live cookies & tokens)
 storage/
 **/storageState.json
@@ -57,3 +58,7 @@ allure-report/
 *.backup
 *.bak
 *.orig
+
+# Azure Functions local dev
+api/local.settings.json
+local.settings.json
