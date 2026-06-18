@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Runner Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    label { display: block; margin-top: 10px; }
+    button { margin-top: 20px; }
+    #output { margin-top: 30px; white-space: pre-wrap; background: #f4f4f4; padding: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Test Runner Dashboard</h1>
+  <form id="testForm">
+    <label>Environment:
+      <input type="text" id="env" name="env" placeholder="e.g. dev, qa, prod">
+    </label>
+    <label>Suite Name:
+      <input type="text" id="suite" name="suite" placeholder="e.g. login, regression">
+    </label>
+    <label>Browser:
+      <input type="text" id="browser" name="browser" placeholder="e.g. chromium, firefox, webkit">
+    </label>
+    <button type="submit">Run Tests</button>
+  </form>
+  <div id="output"></div>
+  <script>
+    document.getElementById('testForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      document.getElementById('output').textContent = 'Running tests...';
+      const env = document.getElementById('env').value;
+      const suite = document.getElementById('suite').value;
+      const browser = document.getElementById('browser').value;
+      const res = await fetch('http://localhost:3001/run-tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ env, suite, browser })
+      });
+      const data = await res.json();
+      if (data.output) {
+        document.getElementById('output').textContent = data.output;
+      } else {
+        document.getElementById('output').textContent = 'Error: ' + (data.error || 'Unknown error');
+      }
+    });
+  </script>
+</body>
+</html>

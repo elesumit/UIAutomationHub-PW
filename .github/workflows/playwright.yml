@@ -1,0 +1,530 @@
+name: 🎭 Veradigm Automation - Playwright Test Executor
+on:
+  workflow_dispatch:
+    inputs:
+      test_profile:
+        description: 'Test profile to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - regression
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'QA'
+        type: choice
+        options:
+          - QA
+          - UAT
+      browser:
+        description: 'Browser to run tests on'
+        required: true
+        default: 'chrome'
+        type: choice
+        options:
+          - chrome
+          - edge
+          - webkit
+      headless_mode:
+        description: 'Run tests in headless mode'
+        required: true
+        default: true
+        type: boolean
+      parallel_workers:
+        description: 'Number of parallel workers'
+        required: true
+        default: '1'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+      retry_failed_tests:
+        description: 'Number of retries for failed tests'
+        required: true
+        default: '0'
+        type: choice
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+      custom_base_url:
+        description: 'Custom base URL (optional - overrides environment default)'
+        required: false
+        type: string
+      test_plan_key:
+        description: 'Xray Test Plan Key (optional - e.g., BTC-101)'
+        required: false
+        type: string
+
+jobs:
+  validate-inputs:
+    runs-on: ubuntu-latest
+    outputs:
+      test_command: ${{ steps.validate.outputs.test_command }}
+      
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ✅ Validate and process inputs
+        id: validate
+        run: |
+          # Process test profile input
+          TEST_PROFILE="${{ github.event.inputs.test_profile }}"
+          echo "test_profile=$TEST_PROFILE" >> $GITHUB_OUTPUT
+          
+          # Build test command based on profile
+          case "$TEST_PROFILE" in
+            smoke)
+              echo "test_command=npm run test:smoke" >> $GITHUB_OUTPUT
+              echo "✅ Smoke test profile selected (@smoke tag)"
+              ;;
+            regression)
+              echo "test_command=npm run test:regression" >> $GITHUB_OUTPUT
+              echo "✅ Regression test profile selected (@regression tag)"
+              ;;
+            *)
+              echo "❌ Invalid test profile selection"
+              exit 1
+              ;;
+          esac
+          
+      - name: 📋 Display test configuration
+        run: |
+          echo "## 🎯 Veradigm Automation - Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Profile:** ${{ github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Headless Mode:** ${{ github.event.inputs.headless_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Parallel Workers:** ${{ github.event.inputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Retry Count:** ${{ github.event.inputs.retry_failed_tests }}" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Profile Details" >> $GITHUB_STEP_SUMMARY
+          case "${{ github.event.inputs.test_profile }}" in
+            smoke)
+              echo "- Tests: Critical smoke tests tagged with @smoke" >> $GITHUB_STEP_SUMMARY
+              echo "- Reports: HTML, JSON, JUnit in test-results/" >> $GITHUB_STEP_SUMMARY
+              echo "- Tags: @smoke" >> $GITHUB_STEP_SUMMARY
+              ;;
+            regression)
+              echo "- Tests: Full regression suite tagged with @regression" >> $GITHUB_STEP_SUMMARY
+              echo "- Reports: HTML, JSON, JUnit in test-results/" >> $GITHUB_STEP_SUMMARY
+              echo "- Tags: @regression" >> $GITHUB_STEP_SUMMARY
+              ;;
+          esac
+          
+  cucumber-playwright-run:
+    needs: validate-inputs
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: 📦 Install dependencies
+        run: |
+          npm install
+        
+      - name: 🌐 Install Playwright Browsers
+        run: |
+          npx playwright install --with-deps chromium
+        
+      - name: 📝 Create .env file
+        run: |
+          # Create .env file since it's gitignored
+          # Check if custom URL is provided, otherwise use environment default
+          CUSTOM_URL="${{ github.event.inputs.custom_base_url }}"
+          
+          if [ -n "$CUSTOM_URL" ]; then
+            CE_PORTAL_URL="$CUSTOM_URL"
+            SF_URL="$CUSTOM_URL"
+            echo "Using custom URLs: $CUSTOM_URL"
+          else
+            # Set URLs based on selected environment
+            case "${{ github.event.inputs.environment }}" in
+              QA)
+                CE_PORTAL_URL="${{ secrets.CE_QA_URL }}"
+                SF_URL="${{ secrets.SF_QA_URL }}"
+                ;;
+              UAT)
+                CE_PORTAL_URL="${{ secrets.CE_UAT_URL }}"
+                SF_URL="${{ secrets.SF_UAT_URL }}"
+                ;;
+              *)
+                CE_PORTAL_URL="${{ secrets.CE_QA_URL }}"
+                SF_URL="${{ secrets.SF_QA_URL }}"
+                ;;
+            esac
+            echo "Using environment URLs for ${{ github.event.inputs.environment }}"
+          fi
+          
+          echo "🌐 Browser selected: ${{ github.event.inputs.browser }}"
+          
+          cat > .env << EOF
+          # Environment Configuration
+          ENV=${{ github.event.inputs.environment }}
+          BROWSER=${{ github.event.inputs.browser }}
+          HEADLESS=${{ github.event.inputs.headless_mode }}
+          
+          # CE Portal URLs
+          CE_QA_URL=$CE_PORTAL_URL
+          CE_UAT_URL=$CE_PORTAL_URL
+          
+          # Salesforce URLs
+          SF_QA_URL=$SF_URL
+          SF_UAT_URL=$SF_URL
+          
+          # Credentials (from GitHub Secrets)
+          CE_UserName=${{ secrets.CE_USERNAME }}
+          CE_Password=${{ secrets.CE_PASSWORD }}
+          CEUAT_UserName=${{ secrets.CEUAT_USERNAME }}
+          CEUAT_Password=${{ secrets.CEUAT_PASSWORD }}
+          
+          SF_UserName=${{ secrets.SF_USERNAME }}
+          SF_Password=${{ secrets.SF_PASSWORD }}
+          SFQA_UserName=${{ secrets.SFQA_USERNAME }}
+          SFQA_Password=${{ secrets.SFQA_PASSWORD }}
+          
+          # Video Recording
+          RECORD_VIDEO=false
+          EOF
+          
+          echo "Created .env file for ${{ github.event.inputs.environment }} environment"
+          
+      - name: 🔧 Setup environment variables
+        run: |
+          echo "Setting up environment variables..."
+          echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          echo "BROWSER=${{ github.event.inputs.browser }}" >> $GITHUB_ENV
+          echo "HEADLESS=${{ github.event.inputs.headless_mode }}" >> $GITHUB_ENV
+          
+          case "${{ github.event.inputs.environment }}" in
+            QA)
+              echo "Environment: QA - Quality Assurance"
+              ;;
+            UAT)
+              echo "Environment: UAT - User Acceptance Testing"
+              ;;
+          esac
+          
+          echo "🎉 Environment configured for ${{ github.event.inputs.environment }}!"
+
+      - name: 📢 Send Slack start notification
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "⚠️ SLACK_WEBHOOK_URL not configured, skipping notification"
+            exit 0
+          fi
+          
+          MESSAGE="🚀 *Test Execution Started*\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
+          MESSAGE="${MESSAGE}*Profile:* ${{ github.event.inputs.test_profile }}\n"
+          MESSAGE="${MESSAGE}*Triggered by:* @${{ github.actor }}\n"
+          MESSAGE="${MESSAGE}*Branch:* ${{ github.ref_name }}\n"
+          MESSAGE="${MESSAGE}*Workflow:* #${{ github.run_number }}\n"
+          MESSAGE="${MESSAGE}*Environment:* ${{ github.event.inputs.environment }}\n"
+          MESSAGE="${MESSAGE}━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"${MESSAGE}\"}" \
+            --max-time 15 || echo "⚠️ Failed to send Slack notification"
+          
+          echo "✅ Slack start notification sent"
+          
+      - name: 🧪 Run Cucumber tests
+        id: test_execution
+        continue-on-error: true
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          BROWSER: ${{ github.event.inputs.browser }}
+          HEADLESS: ${{ github.event.inputs.headless_mode }}
+          TEST_PROFILE: ${{ github.event.inputs.test_profile }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo "🚀 Starting tests with profile: ${{ github.event.inputs.test_profile }}"
+          ${{ needs.validate-inputs.outputs.test_command }}
+          
+      - name: 🔄 Retry failed tests
+        if: steps.test_execution.outcome == 'failure' && github.event.inputs.retry_failed_tests != '0'
+        continue-on-error: true
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          BROWSER: ${{ github.event.inputs.browser }}
+          HEADLESS: ${{ github.event.inputs.headless_mode }}
+          TEST_PROFILE: ${{ github.event.inputs.test_profile }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo "Retrying failed tests..."
+          RETRY_COUNT=${{ github.event.inputs.retry_failed_tests }}
+          
+          for i in $(seq 1 $RETRY_COUNT); do
+            echo "Retry attempt $i of $RETRY_COUNT"
+            if ${{ needs.validate-inputs.outputs.test_command }}; then
+              echo "Tests passed on retry $i"
+              break
+            elif [ $i -eq $RETRY_COUNT ]; then
+              echo "All retry attempts exhausted"
+              exit 1
+            fi
+            sleep 10
+          done
+          
+      - name: 📊 Generate test summary
+        if: always()
+        run: |
+          echo "## 🎯 Test Execution Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile:** ${{ github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Execution Mode:** ${{ github.event.inputs.headless_mode == 'true' && 'Headless' || 'Headed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workers:** ${{ github.event.inputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Reports Generated" >> $GITHUB_STEP_SUMMARY
+          if [ -f "test-results/cucumber-report.html" ]; then
+            echo "- ✅ Cucumber HTML Report" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f "test-results/cucumber-report.json" ]; then
+            echo "- ✅ Cucumber JSON Report" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f "test-results/junit-report.xml" ]; then
+            echo "- ✅ JUnit XML Report" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status:** ✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Status:** ⚠️ Some tests failed or encountered errors" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+      - name: 📋 Upload Cucumber reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-reports-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          path: test-results/
+          retention-days: 30
+          
+      - name: 📸 Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-screenshots-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          path: test-results/screenshots/
+          retention-days: 14
+
+      - name: 🎥 Upload videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-videos-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          path: test-results/videos/
+          retention-days: 14
+
+      - name: 📧 Create test execution summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            const summary = {
+              runId: '${{ github.run_number }}',
+              testProfile: '${{ github.event.inputs.test_profile }}',
+              environment: '${{ github.event.inputs.environment }}',
+              browser: '${{ github.event.inputs.browser }}',
+              headless: '${{ github.event.inputs.headless_mode }}',
+              parallelWorkers: '${{ github.event.inputs.parallel_workers }}',
+              retryCount: '${{ github.event.inputs.retry_failed_tests }}',
+              timestamp: new Date().toISOString(),
+              status: '${{ job.status }}',
+              framework: 'Cucumber + Playwright',
+              project: 'Veradigm Automation'
+            };
+            
+            fs.mkdirSync('test-results', { recursive: true });
+            fs.writeFileSync('test-results/execution-summary.json', JSON.stringify(summary, null, 2));
+            console.log('Test execution summary created');
+            
+      - name: 📤 Upload execution summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: execution-summary-${{ github.run_number }}
+          path: test-results/execution-summary.json
+          retention-days: 90
+
+      - name: 📊 Upload test results to Jira Xray
+        id: xray_upload
+        if: always() && github.event.inputs.test_plan_key != ''
+        env:
+          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+        run: |
+          echo "📤 Uploading test results to Jira Xray..."
+          
+          # Authenticate with Xray API
+          AUTH_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/authenticate" \
+            -H "Content-Type: application/json" \
+            -d "{\"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\"}")
+          
+          TOKEN=$(echo $AUTH_RESPONSE | jq -r '.')
+          
+          if [ -z "$TOKEN" ] || [ "$TOKEN" == "null" ]; then
+            echo "❌ Failed to authenticate with Xray API"
+            exit 1
+          fi
+          
+          echo "✅ Successfully authenticated with Xray API"
+          
+          # Upload JUnit XML results to Xray
+          if [ -f "test-results/junit-report.xml" ]; then
+            echo "📄 JUnit report found, uploading to Xray..."
+            
+            UPLOAD_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/import/execution/junit?testPlanKey=${{ github.event.inputs.test_plan_key }}&projectKey=BTC" \
+              -H "Content-Type: application/xml" \
+              -H "Authorization: Bearer $TOKEN" \
+              --data-binary @test-results/junit-report.xml \
+              -w "\nHTTP_STATUS:%{http_code}" \
+              -s)
+            
+            HTTP_STATUS=$(echo "$UPLOAD_RESPONSE" | grep -o "HTTP_STATUS:[0-9]*" | cut -d: -f2)
+            RESPONSE_BODY=$(echo "$UPLOAD_RESPONSE" | sed 's/HTTP_STATUS:[0-9]*$//')
+            
+            echo "HTTP Status: $HTTP_STATUS"
+            echo "Response: $RESPONSE_BODY"
+            
+            if [ "$HTTP_STATUS" == "200" ] || [ "$HTTP_STATUS" == "201" ]; then
+              TEST_EXEC_KEY=$(echo "$RESPONSE_BODY" | jq -r '.key // empty')
+              
+              if [ -n "$TEST_EXEC_KEY" ] && [ "$TEST_EXEC_KEY" != "null" ]; then
+                echo "✅ Test results uploaded to Xray"
+                echo "Test Execution Key: $TEST_EXEC_KEY"
+                echo "test_exec_key=$TEST_EXEC_KEY" >> $GITHUB_OUTPUT
+                
+                # Add to step summary
+                echo "## 📊 Jira Xray Integration" >> $GITHUB_STEP_SUMMARY
+                echo "- **Test Plan:** ${{ github.event.inputs.test_plan_key }}" >> $GITHUB_STEP_SUMMARY
+                echo "- **Test Execution:** [$TEST_EXEC_KEY](https://veradigm.atlassian.net/browse/$TEST_EXEC_KEY)" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "⚠️ Upload succeeded but no Test Execution key returned"
+                echo "test_exec_key=" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "❌ Failed to upload results to Xray (HTTP $HTTP_STATUS)"
+              echo "Response: $RESPONSE_BODY"
+              echo "test_exec_key=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ JUnit report not found at test-results/junit-report.xml"
+            ls -la test-results/ || echo "test-results directory not found"
+            echo "test_exec_key=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📊 Parse test results for Slack
+        id: parse_results
+        if: always()
+        run: |
+          # Parse JUnit XML to get test counts
+          if [ -f "test-results/junit-report.xml" ]; then
+            echo "📄 Parsing JUnit report..."
+            cat test-results/junit-report.xml | head -5
+            
+            # Use sed instead of grep -P for better compatibility
+            TOTAL=$(sed -n 's/.*tests="\([0-9]*\)".*/\1/p' test-results/junit-report.xml | head -1)
+            FAILURES=$(sed -n 's/.*failures="\([0-9]*\)".*/\1/p' test-results/junit-report.xml | head -1)
+            
+            # Default to 0 if empty
+            TOTAL=${TOTAL:-0}
+            FAILURES=${FAILURES:-0}
+            PASSED=$((TOTAL - FAILURES))
+            
+            echo "Total: $TOTAL, Passed: $PASSED, Failed: $FAILURES"
+            
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILURES" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ JUnit report not found"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📢 Send Slack completion notification
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "⚠️ SLACK_WEBHOOK_URL not configured, skipping notification"
+            exit 0
+          fi
+          
+          # Calculate duration
+          DURATION="${{ github.event.inputs.parallel_workers }}m"
+          
+          # Determine status
+          TOTAL=${{ steps.parse_results.outputs.total }}
+          PASSED=${{ steps.parse_results.outputs.passed }}
+          FAILED=${{ steps.parse_results.outputs.failed }}
+          
+          if [ "$FAILED" -gt 0 ]; then
+            STATUS="❌"
+            STATUS_TEXT="Test Execution Completed with Failures"
+          else
+            STATUS="✅"
+            STATUS_TEXT="Test Execution Completed Successfully"
+          fi
+          
+          # Build message
+          MESSAGE="${STATUS} *${STATUS_TEXT}*\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
+          MESSAGE="${MESSAGE}*Total:* ${TOTAL} | *Passed:* ${PASSED} ✅ | *Failed:* ${FAILED} ❌\n"
+          MESSAGE="${MESSAGE}*Duration:* ${DURATION}\n"
+          MESSAGE="${MESSAGE}*Environment:* ${{ github.event.inputs.environment }}\n"
+          MESSAGE="${MESSAGE}━━━━━━━━━━━━━━━━━━━━━━━━\n"
+          
+          # Add links
+          REPORT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          MESSAGE="${MESSAGE}<${REPORT_URL}|View Report>"
+          
+          if [ -n "${{ steps.xray_upload.outputs.test_exec_key }}" ]; then
+            JIRA_URL="https://veradigm.atlassian.net/browse/${{ steps.xray_upload.outputs.test_exec_key }}"
+            MESSAGE="${MESSAGE} | <${JIRA_URL}|Jira ${{ steps.xray_upload.outputs.test_exec_key }}>"
+          fi
+          
+          # Send to Slack
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\": \"${MESSAGE}\"}" \
+            --max-time 15 || echo "⚠️ Failed to send Slack notification"
+          
+          echo "✅ Slack notification sent"

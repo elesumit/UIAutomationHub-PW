@@ -27,15 +27,15 @@ __pycache__/
 resources/_gen/
 public/
 
-# Environment
+# Environment / secrets — NEVER commit
 .env
 .env.local
-
-# --- Secrets / session state (NEVER commit) ---
 .env.*.local
 .env.keys
 *.env.keys
 auth.json
+
+# Playwright auth/session state (live cookies & tokens)
 storage/
 **/storageState.json
 **/storage-state.json

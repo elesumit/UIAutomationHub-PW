@@ -1,0 +1,67 @@
+Test Case ID,Scenario Name,Tags,Action,Element,Value
+BTC-135,Create Case and Validate in Salesforce,"@smoke, @regression",Navigate,CE Portal,
+,,,Click,Log in,
+,,,Wait,3,
+,,,Enter,CE_UserName,
+,,,Click,Continue,
+,,,Enter,CE_Password,
+,,,Click,Continue,
+,,,Wait,30,
+,,,Click,Support,
+,,,Wait,3,
+,,,Enter,Search for help,Portal
+,,,Wait,3,
+,,,Click,Create a Case,
+,,,Select,Select a Product,Veradigm Fiscal Management and Supply Chain Solutions
+,,,Select,Select an Account,Sumit Gupta Pediatrics
+,,,Select,Impact,Partial loss of service
+,,,Enter,Subject,Test12 Portal access is not working
+,,,Enter,Description,Test12 Not able to access Portal
+,,,Select,How would you like to be contacted,Phone
+,,,Enter,Case Collaborators,Sejal Nagpal
+,,,Click,Sejal Nagpal,
+,,,Enter,Protected Health Information Details,Details: User is not able to login
+,,,Upload,Upload Files,FileUpload_1.PNG
+,,,Wait,2,
+,,,Click,Done,
+,,,Wait,2,
+,,,Click,Submit,
+,,,Wait,4,
+,,,Capture,Case Number,caseId1
+,,,Verify,Priority,High
+,,,Navigate,Salesforce,
+,,,Enter,SFQA_UserName,
+,,,Enter,SF_Password,
+,,,Click,Log In to Sandbox,
+,,,Wait,40,
+,,,Click,App Launcher,
+,,,Enter,Search apps and items...,Service Console
+,,,Click,Service Console,
+,,,Wait,3,
+,,,Click,Search...,
+,,,Click,Search: All,
+,,,Select,Search by object type,Cases
+,,,EnterCaptured,caseId1,Search...
+,,,ClickCaptured,caseId1,
+,,,Wait,3,
+,,,Tab,Details,
+,,,Wait,3,
+,,,Verify,Status,New
+,,,Wait,2,
+,,,Click,Edit Status,
+,,,Wait,2,
+,,,Select,Status,Resolution Provided
+,,,Wait,2,
+,,,Select,Issue,Billing & Payment Issue
+,,,Wait,2,
+,,,Select,Sub Issue,Billing Setup Broken
+,,,Wait,2,
+,,,Enter,Close Case Comment,Issue Resoloved
+,,,Wait,2,
+,,,Select,Close Code,Interface
+,,,Wait,2,
+,,,Select,Close Sub Code,3rd Party
+,,,Wait,2,
+,,,Click,Save,
+,,,Wait,2,
+,,,Verify,Status,Resolution Provided
