@@ -116,6 +116,12 @@ variable "github_repo" {
   default     = "Testing-Automation-PlayWright"
 }
 
+variable "github_target_branch" {
+  description = "Branch the backend commits generated feature files to. Default main (legacy); set to a non-default branch to keep authenticated users from writing straight to main."
+  type        = string
+  default     = "main"
+}
+
 variable "jira_user" {
   description = "Jira account email for Basic auth (JIRA_USER)"
   type        = string

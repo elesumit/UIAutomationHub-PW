@@ -19,6 +19,10 @@ const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
 const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
 const XRAY_BASE = 'https://xray.cloud.getxray.app/api/v2';
+// Branch that save-to-github / upload-to-jira-github commit to. Defaults to main
+// (legacy behaviour); set GITHUB_TARGET_BRANCH to a non-default branch to avoid
+// authenticated users writing straight to main (see api/README.md security note).
+const GITHUB_TARGET_BRANCH = process.env.GITHUB_TARGET_BRANCH || 'main';
 
 // ──────────────────────────── helpers ────────────────────────────
 
@@ -126,7 +130,7 @@ async function commitFeatureToGitHub(filename, content, message) {
   const filePath = `features/${filename}`;
   let sha;
   try {
-    const { data } = await octokit.repos.getContent({ owner: GITHUB_OWNER, repo: GITHUB_REPO, path: filePath });
+    const { data } = await octokit.repos.getContent({ owner: GITHUB_OWNER, repo: GITHUB_REPO, path: filePath, ref: GITHUB_TARGET_BRANCH });
     sha = data.sha;
   } catch (_) {
     /* file doesn't exist yet */
@@ -138,7 +142,7 @@ async function commitFeatureToGitHub(filename, content, message) {
     message,
     content: Buffer.from(content).toString('base64'),
     sha,
-    branch: 'main',
+    branch: GITHUB_TARGET_BRANCH,
   });
   return filePath;
 }

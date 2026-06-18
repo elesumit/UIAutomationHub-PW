@@ -55,9 +55,10 @@ resource "azurerm_function_app_flex_consumption" "app" {
     AzureWebJobsStorage__credential  = "managedidentity"
 
     # Backend config (non-secret)
-    GITHUB_OWNER  = var.github_owner
-    GITHUB_REPO   = var.github_repo
-    JIRA_BASE_URL = var.jira_base_url
+    GITHUB_OWNER         = var.github_owner
+    GITHUB_REPO          = var.github_repo
+    GITHUB_TARGET_BRANCH = var.github_target_branch
+    JIRA_BASE_URL        = var.jira_base_url
 
     # Secrets — KV references (trailing slash on SecretUri = "latest version").
     GITHUB_COPILOT_TOKEN = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
