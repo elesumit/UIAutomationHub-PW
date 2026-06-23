@@ -26,7 +26,7 @@ resource "azurerm_cognitive_account" "aif" {
   kind                          = "OpenAI"
   sku_name                      = "S0"
   custom_subdomain_name         = "aif-${var.site_name}-prd"
-  local_auth_enabled            = false   # Entra-only — no API key path
+  local_auth_enabled            = false # Entra-only — no API key path
   public_network_access_enabled = true
 
   identity {
@@ -47,8 +47,8 @@ resource "azurerm_cognitive_deployment" "model" {
   }
 
   sku {
-    name     = "DataZoneStandard"   # REQUIRED — do not change to GlobalStandard
-    capacity = 50                   # 1 K-TPM units; tune after measuring usage
+    name     = "DataZoneStandard" # REQUIRED — do not change to GlobalStandard
+    capacity = 50                 # 1 K-TPM units; tune after measuring usage
   }
 
   version_upgrade_option = "OnceNewDefaultVersionAvailable"

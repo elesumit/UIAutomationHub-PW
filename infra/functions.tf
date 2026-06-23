@@ -67,11 +67,11 @@ resource "azurerm_function_app_flex_consumption" "app" {
 
     # Secrets — KV references (trailing slash on SecretUri = "latest version").
     # GITHUB_COPILOT_TOKEN removed — generation now uses Azure AI Foundry MI auth.
-    GITHUB_TOKEN         = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
-    JIRA_USER            = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_user.versionless_id}/)"
-    JIRA_API_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_api_token.versionless_id}/)"
-    XRAY_CLIENT_ID       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_id.versionless_id}/)"
-    XRAY_CLIENT_SECRET   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_secret.versionless_id}/)"
+    GITHUB_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
+    JIRA_USER          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_user.versionless_id}/)"
+    JIRA_API_TOKEN     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_api_token.versionless_id}/)"
+    XRAY_CLIENT_ID     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_id.versionless_id}/)"
+    XRAY_CLIENT_SECRET = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_secret.versionless_id}/)"
   }
 
   auth_settings_v2 {
