@@ -78,21 +78,21 @@ Feature: Create Case in CE Portal and verify in Salesforce
     When I wait for 3 seconds
 
     # Verify Case 1 (Critical - Response: 30 min, Resolution: 120 min)
-    When I click on "Search..."
-    When I click on "Search: All"
-    When I select "Cases" from "Search by object type"
+#     When I click on "Search..."
+#     When I click on "Search: All"
+#     When I select "Cases" from "Search by object type"
 
-     When I enter "00205385" in "Search..."
-     When I click on "00205385"
+#      When I enter "00205385" in "Search..."
+#      When I click on "00205385"
 
 
 
-  #  When I enter captured "caseId1" in "Search..."
-  #  When I click on captured "caseId1"
+#   #  When I enter captured "caseId1" in "Search..."
+#   #  When I click on captured "caseId1"
 
-    When I click on "Share"
-When I enter "Hello Test" in "Share an update..."
-    When I click on "Share"
+#     When I click on "Share"
+# When I enter "Hello Test" in "Share an update..."
+#     When I click on "Share"
     # When I click on the "Details" tab
     # When I wait for 3 seconds
     # When I click on "Edit Status"

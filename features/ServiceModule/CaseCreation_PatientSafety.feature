@@ -1,11 +1,12 @@
 @PatientSafety123 @Regression
-Feature: Patient Safety Conditional Fields Visibility and Mandatory Validation in Case Creation User Story OSF1275
+Feature: Create Patient Safety Cases and Validate in Salesforce - Two Cases with Checkbox Combinations 
+  User Story OSF1275
   As a support agent
   I want additional Patient Safety-related fields to appear and be validated when "Is this a Patient Safety case?" is selected
   So that I can capture complete and accurate patient safety information during case creation
 
-  @JIRA_PLACEHOLDER_2
-  Scenario Outline: Create Patient Safety Cases and Validate in Salesforce - <scenario_name>
+  @BTC-340
+  Scenario Outline: Create Patient Safety Cases and Validate in Salesforce
     Given I navigate to CE Portal ""
     When I click on "Log in"
     When I wait for 3 seconds

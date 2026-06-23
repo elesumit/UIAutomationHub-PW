@@ -81,6 +81,21 @@ export class BrowserManager {
     await this.context.storageState({ path });
   }
 
+  // Creates a short-lived context solely to hit a URL and capture the resulting
+  // cookies/localStorage as storageState. Used by sf-auth.ts to exchange a
+  // Salesforce frontdoor.jsp URL for a reusable browser session file.
+  static async mintStorageState(url: string, outputPath: string): Promise<void> {
+    const ctx  = await this.browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const page = await ctx.newPage();
+    try {
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      await ctx.storageState({ path: outputPath });
+    } finally {
+      await page.close();
+      await ctx.close();
+    }
+  }
+
   static async closePage(): Promise<void> {
     if (this.page) {
       await this.page.close();

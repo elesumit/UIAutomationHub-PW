@@ -1,6 +1,6 @@
 
 import * as dotenv from 'dotenv';
-dotenv.config({ override: true });
+dotenv.config(); // existing env vars take priority over .env file
 
 // Helper to get env-specific values
 // Helper to get Salesforce env config

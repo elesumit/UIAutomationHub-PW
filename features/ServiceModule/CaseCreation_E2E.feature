@@ -4,8 +4,8 @@ Feature: Create Case in CE Portal and verify in Salesforce
   I want to create a case in the CE Portal
   So that I can verify it in Salesforce
 
-  @smoke @tc_id1
-  Scenario Outline: Create Case and Validate in Salesforce - <scenario_name>
+  @smoke @tc_id1 @BTC-341
+  Scenario Outline: Create Case and Validate in Salesforce - E2E
     Given I navigate to CE Portal ""
     When I click on "Log in"
     When I wait for 3 seconds
