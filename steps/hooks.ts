@@ -1,5 +1,6 @@
 import { Before, After, BeforeAll, AfterAll, AfterStep, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import { BrowserManager } from '../utils/browser-manager';
+import { ensureSalesforceSession } from '../utils/sf-auth';
 import { ReportLogger } from '../utils/report-logger';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -44,12 +45,17 @@ BeforeAll(async function () {
     'test-results/videos',
     'storage'
   ];
-  
+
   dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   });
+
+  // Mint (or reuse) a Salesforce session via JWT Bearer when SF_USE_JWT=true.
+  // Saves cookies to storage/storageState.json so the Before hook can load them —
+  // meaning test scenarios start already authenticated, no login UI needed.
+  await ensureSalesforceSession();
 });
 
 Before(async function (scenario) {

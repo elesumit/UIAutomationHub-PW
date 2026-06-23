@@ -369,6 +369,67 @@ When('I click on {string} and capture toast notification', async function (eleme
   }
 });
 
+/**
+ * Deep-search all shadow roots for an element matching `selector`.
+ * Returns the element handle if found, null otherwise.
+ * Used for Salesforce LWC components that use native (closed-to-CSS) shadow DOM.
+ */
+async function deepShadowClick(page: any, selector: string): Promise<boolean> {
+  try {
+    const handle = await page.evaluateHandle((sel: string) => {
+      function findInShadow(root: Element | ShadowRoot | Document, css: string): Element | null {
+        try {
+          const direct = (root as Element).querySelector ? (root as Element).querySelector(css) : null;
+          if (direct) return direct;
+        } catch { /* invalid selector for this root */ }
+        const children = (root as Element).querySelectorAll ? (root as Element).querySelectorAll('*') : [];
+        for (const el of Array.from(children)) {
+          if (el.shadowRoot) {
+            const found = findInShadow(el.shadowRoot, css);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+      return findInShadow(document, sel);
+    }, selector);
+
+    const el = handle.asElement();
+    if (!el) return false;
+    await el.click();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Salesforce Lightning icon buttons: friendly step name → ordered list of strategies.
+// `setupUrl` is the fallback for icons trapped in closed native shadow DOM — Playwright
+// navigates directly to the target URL rather than clicking an unreachable icon.
+const SF_ELEMENT_ALIASES: Record<string, {
+  titles?: string[];
+  selectors?: string[];
+  setupUrl?: string;   // navigate to this URL if all click strategies fail
+}> = {
+  setupGear: {
+    titles:    ['Setup'],
+    selectors: ['[title="Setup"]', 'a[title="Setup"]', 'one-app-nav-bar-item-setup a'],
+    setupUrl:  '/lightning/setup/SetupOneHome/home',
+  },
+  appLauncher: {
+    titles:    ['App Launcher'],
+    selectors: ['[title="App Launcher"]', 'button[title="App Launcher"]', '.slds-icon-waffle'],
+  },
+  notifications: {
+    titles:    ['Notifications'],
+    selectors: ['[title="Notifications"]'],
+  },
+  help: {
+    titles:    ['Help & Training'],
+    selectors: ['[title="Help & Training"]'],
+  },
+};
+
 When('I click on {string}', async function (elementName: string) {
   elementName = resolveCsvPlaceholders(elementName, this.testDataRow);
   // Wait for up to 5 seconds for the element to appear
@@ -376,6 +437,116 @@ When('I click on {string}', async function (elementName: string) {
   // Set up listener for potential new page
   const pagePromise = this.context.waitForEvent('page', { timeout: 1000 }).catch(() => null);
   let clicked = false;
+
+  // Strategy alias: Salesforce LWC icon buttons identified by Playwright codegen.
+  const sfAlias = SF_ELEMENT_ALIASES[elementName];
+  if (!clicked && sfAlias) {
+    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+
+    // 1a. getByRole — codegen-verified: gear is button[name="Setup"], appLauncher etc.
+    for (const title of sfAlias.titles ?? []) {
+      if (clicked) break;
+      try {
+        const loc = this.page.getByRole('button', { name: title, exact: true });
+        const count = await loc.count();
+        if (count > 0) {
+          await loc.first().click({ timeout: 5000 });
+          ReportLogger.logInfo(`✅ Clicked "${elementName}" via getByRole('button', "${title}")`);
+          clicked = true;
+        }
+      } catch { /* try next */ }
+    }
+
+    // 1b. CSS selectors (synthetic shadow fallback)
+    if (!clicked) {
+      for (const sel of sfAlias.selectors ?? []) {
+        if (clicked) break;
+        try {
+          const loc = this.page.locator(sel);
+          if (await loc.count() > 0) {
+            await loc.first().click({ force: true, timeout: 5000 });
+            ReportLogger.logInfo(`✅ Clicked "${elementName}" via CSS "${sel}"`);
+            clicked = true;
+          }
+        } catch { /* try next */ }
+      }
+    }
+
+    // 1c. URL navigation fallback — when icon is in truly closed shadow DOM.
+    if (!clicked && sfAlias.setupUrl) {
+      const baseUrl = (config.salesforce.baseUrl || '').replace(/\/$/, '');
+      const targetUrl = `${baseUrl}${sfAlias.setupUrl}`;
+      ReportLogger.logInfo(`[SF alias] Navigating directly to ${targetUrl}`);
+      await this.page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      ReportLogger.logInfo(`✅ Navigated to Setup page (URL fallback for "${elementName}")`);
+      clicked = true;
+    }
+  }
+
+  // Strategy "setup" — codegen shows this opens a new tab via menuitem.
+  // Handle: (a) already on Setup page, (b) click menuitem + switch to new tab.
+  if (!clicked && elementName.toLowerCase() === 'setup') {
+    const currentUrl = this.page.url();
+    if (currentUrl.includes('SetupOneHome') || currentUrl.includes('/setup/')) {
+      ReportLogger.logInfo(`✅ Already on Salesforce Setup page — skipping "setup" click`);
+      clicked = true;
+    }
+  }
+  if (!clicked && elementName.toLowerCase() === 'setup') {
+    await this.page.waitForTimeout(1000);
+    // Codegen-recorded selector: menuitem "Setup Opens in a new tab"
+    const setupMenuSelectors = [
+      { role: 'menuitem' as const, name: 'Setup Opens in a new tab', exact: true },
+      { role: 'menuitem' as const, name: 'Setup', exact: false },
+    ];
+    for (const opts of setupMenuSelectors) {
+      if (clicked) break;
+      try {
+        const loc = this.page.getByRole(opts.role, { name: opts.name, exact: opts.exact });
+        if (await loc.count() > 0) {
+          // Setup opens in a new tab — wait for the popup and switch to it
+          const popupPromise = this.page.context().waitForEvent('page', { timeout: 10000 }).catch(() => null);
+          await loc.first().click({ timeout: 5000 });
+          const newTab = await popupPromise;
+          if (newTab) {
+            await newTab.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
+            this.page = newTab;
+            ReportLogger.logInfo(`✅ Clicked "Setup" menuitem — switched to new tab: ${newTab.url()}`);
+          } else {
+            ReportLogger.logInfo(`✅ Clicked "Setup" menuitem (same tab)`);
+          }
+          clicked = true;
+        }
+      } catch { /* try next */ }
+    }
+  }
+  if (!clicked && elementName.toLowerCase() === 'setup') {
+    // Generic href fallbacks
+    const setupSelectors = [
+      'a[href*="SetupOneHome"]',
+      '[role="menuitem"]:has-text("Setup")',
+      'a[href*="/setup/"]',
+    ];
+    for (const sel of setupSelectors) {
+      if (clicked) break;
+      try {
+        const loc = this.page.locator(sel).first();
+        const count = await this.page.locator(sel).count();
+        if (count > 0) {
+          await loc.waitFor({ state: 'visible', timeout: 3000 });
+          await loc.click();
+          ReportLogger.logInfo(`✅ Clicked "setup" via "${sel}"`);
+          clicked = true;
+        }
+      } catch { /* try next */ }
+      // Deep shadow fallback
+      if (!clicked) {
+        clicked = await deepShadowClick(this.page, sel);
+        if (clicked) ReportLogger.logInfo(`✅ Clicked "setup" via deep-shadow ("${sel}")`);
+      }
+    }
+  }
 
   // Strategy 0: Dedicated checkbox handling (Lightning datatable row selectors,
   // SLDS-styled checkboxes). The native <input type="checkbox"> is visually
@@ -551,6 +722,9 @@ When('I click on {string}', async function (elementName: string) {
     
     const fieldName = elementName.toLowerCase();
     const strategies = [
+      // Title/aria-label attribute (covers SF icon buttons like gear, app launcher)
+      `[title="${elementName}"]`,
+      `[aria-label="${elementName}"]`,
       // Exact and partial text matches
       `button:text-is("${elementName}")`,
       `button:has-text("${elementName}")`,

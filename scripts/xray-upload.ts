@@ -8,6 +8,12 @@ dotenv.config();
 
 const xrayUrl = 'https://xray.cloud.getxray.app/api/v2';
 const resultsPath = path.resolve(__dirname, '../test-results/junit-report.xml');
+const cucumberReportPath = path.resolve(__dirname, '../test-results/cucumber-report.json');
+
+// Use Cucumber JSON format when --cucumber flag is passed or XRAY_USE_CUCUMBER=true.
+// Cucumber format matches tests by @tag (e.g. @BTC-340) — prevents Xray from creating
+// duplicate test cases when scenario outline names don't match existing ticket summaries.
+const useCucumber = process.argv.includes('--cucumber') || process.env.XRAY_USE_CUCUMBER === 'true';
 
 function extractFeaturesFromJUnit(xmlContent: string): string[] {
   const features: string[] = [];
@@ -55,36 +61,39 @@ async function getAuthToken(): Promise<string> {
 }
 
 async function uploadResults(token: string, testPlanKey?: string, projectKey?: string, testExecutionKey?: string) {
-  const xml = fs.readFileSync(resultsPath, 'utf-8');
-  
-  // Build URL with parameters
-  let url = `${xrayUrl}/import/execution/junit`;
-  const params = [];
-  
-  // If Test Execution key is provided, update that specific execution
+  const params: string[] = [];
+
   if (testExecutionKey) {
     params.push(`testExecKey=${testExecutionKey}`);
   } else if (testPlanKey) {
-    // Otherwise, link to Test Plan (creates new execution)
     params.push(`testPlanKey=${testPlanKey}`);
   }
-  
-  if (projectKey) {
-    params.push(`projectKey=${projectKey}`);
+  if (projectKey) params.push(`projectKey=${projectKey}`);
+
+  if (useCucumber) {
+    // Cucumber JSON — Xray matches tests by @tag (e.g. @BTC-340), no duplicates created
+    if (!fs.existsSync(cucumberReportPath)) {
+      throw new Error(`Cucumber report not found at ${cucumberReportPath}`);
+    }
+    const json = JSON.parse(fs.readFileSync(cucumberReportPath, 'utf-8'));
+    const url = `${xrayUrl}/import/execution/cucumber${params.length ? '?' + params.join('&') : ''}`;
+    console.log('[Xray] Uploading via Cucumber JSON format (tag-based matching)...');
+    const res = await axios.post(url, json, {
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      maxBodyLength: Infinity,
+    });
+    return res.data;
+  } else {
+    // JUnit XML — Xray matches tests by name
+    const xml = fs.readFileSync(resultsPath, 'utf-8');
+    const url = `${xrayUrl}/import/execution/junit${params.length ? '?' + params.join('&') : ''}`;
+    console.log('[Xray] Uploading via JUnit XML format (name-based matching)...');
+    const res = await axios.post(url, xml, {
+      headers: { 'Content-Type': 'application/xml', Authorization: `Bearer ${token}` },
+      maxBodyLength: Infinity,
+    });
+    return res.data;
   }
-  
-  if (params.length > 0) {
-    url += `?${params.join('&')}`;
-  }
-  
-  const res = await axios.post(url, xml, {
-    headers: {
-      'Content-Type': 'application/xml',
-      Authorization: `Bearer ${token}`,
-    },
-    maxBodyLength: Infinity,
-  });
-  return res.data;
 }
 
 async function updateTestExecution(executionKey: string) {
