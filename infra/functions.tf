@@ -60,8 +60,13 @@ resource "azurerm_function_app_flex_consumption" "app" {
     GITHUB_TARGET_BRANCH = var.github_target_branch
     JIRA_BASE_URL        = var.jira_base_url
 
+    # Azure AI Foundry — MI auth, no API key needed (aifoundry.tf)
+    AIF_ENDPOINT        = azurerm_cognitive_account.aif.endpoint
+    AIF_DEPLOYMENT_NAME = azurerm_cognitive_deployment.model.name
+    AIF_API_VERSION     = "2024-10-21"
+
     # Secrets — KV references (trailing slash on SecretUri = "latest version").
-    GITHUB_COPILOT_TOKEN = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
+    # GITHUB_COPILOT_TOKEN removed — generation now uses Azure AI Foundry MI auth.
     GITHUB_TOKEN         = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
     JIRA_USER            = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_user.versionless_id}/)"
     JIRA_API_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_api_token.versionless_id}/)"

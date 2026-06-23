@@ -10,11 +10,13 @@
  * the SWA linked-backend registration under the site's Entra auth.
  */
 const { app } = require('@azure/functions');
+const { AzureOpenAI } = require('openai');
+const { DefaultAzureCredential, getBearerTokenProvider } = require('@azure/identity');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-const GITHUB_TOKEN = process.env.GITHUB_COPILOT_TOKEN || process.env.GITHUB_TOKEN;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
 const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
@@ -23,6 +25,16 @@ const XRAY_BASE = 'https://xray.cloud.getxray.app/api/v2';
 // (legacy behaviour); set GITHUB_TARGET_BRANCH to a non-default branch to avoid
 // authenticated users writing straight to main (see api/README.md security note).
 const GITHUB_TARGET_BRANCH = process.env.GITHUB_TARGET_BRANCH || 'main';
+
+// Azure AI Foundry client — MI auth via DefaultAzureCredential, no API key
+const openAIClient = new AzureOpenAI({
+  endpoint:             process.env.AIF_ENDPOINT,
+  apiVersion:           process.env.AIF_API_VERSION,
+  azureADTokenProvider: getBearerTokenProvider(
+    new DefaultAzureCredential(),
+    'https://cognitiveservices.azure.com/.default'
+  ),
+});
 
 // ──────────────────────────── helpers ────────────────────────────
 
@@ -155,10 +167,19 @@ app.http('health', {
   methods: ['GET'],
   authLevel: 'anonymous',
   route: 'health',
-  handler: async () =>
-    json(200, { status: 'ok', copilotConfigured: !!GITHUB_TOKEN, repo: `${GITHUB_OWNER}/${GITHUB_REPO}` }),
+  handler: async () => {
+    const aifConfigured = !!(process.env.AIF_ENDPOINT && process.env.AIF_DEPLOYMENT_NAME);
+    return json(200, {
+      status: 'ok',
+      aifConfigured,
+      copilotConfigured: aifConfigured, // backward-compat alias — older page versions check this field
+      repo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
+    });
+  },
 });
 
+// POST /api/generate — AI test generation via Azure AI Foundry (MI auth)
+// Replaces the previous GitHub Models / GITHUB_COPILOT_TOKEN call.
 app.http('generate', {
   methods: ['POST'],
   authLevel: 'anonymous',
@@ -167,7 +188,6 @@ app.http('generate', {
     try {
       const { description, application, testType } = await request.json();
       if (!description) return json(400, { error: 'Description is required' });
-      if (!GITHUB_TOKEN) return json(500, { error: 'GitHub Copilot token not configured (GITHUB_COPILOT_TOKEN)' });
 
       const isPatientSafety = /patient safety|checkbox|is this a patient/i.test(description);
       const scenarioCount = isPatientSafety ? '10-15' : '5-8';
@@ -187,41 +207,30 @@ Requirements:
 
 Output only the Feature file content, no explanations.`;
 
-      const response = await axios.post(
-        'https://models.inference.ai.azure.com/chat/completions',
-        {
-          messages: [
-            { role: 'system', content: buildSystemPrompt() },
-            { role: 'user', content: userPrompt },
-          ],
-          model: 'gpt-4o',
-          temperature: 0.2,
-          max_tokens: 8000,
-          top_p: 1.0,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${GITHUB_TOKEN}`,
-            'Content-Type': 'application/json',
-            'extra-parameters': 'pass-through',
-          },
-          timeout: 120000,
-        }
-      );
+      const result = await openAIClient.chat.completions.create({
+        model:       process.env.AIF_DEPLOYMENT_NAME,
+        messages:    [
+          { role: 'system', content: buildSystemPrompt() },
+          { role: 'user',   content: userPrompt },
+        ],
+        temperature: 0.2,
+        max_tokens:  8000,
+      });
 
-      const content = response.data.choices[0].message.content
+      const content = (result.choices[0].message.content || '')
         .replace(/```gherkin\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
 
+      context.log('✅ Test cases generated via Azure AI Foundry');
       return json(200, {
         success: true,
         content,
-        metadata: { model: 'gpt-4o', application: application || 'Both', testType: testType || 'General' },
+        metadata: { model: process.env.AIF_DEPLOYMENT_NAME, application: application || 'Both', testType: testType || 'General' },
       });
     } catch (error) {
-      context.error('generate failed:', error.response?.data || error.message);
-      return json(500, { error: 'Failed to generate test cases', details: error.response?.data?.error?.message || error.message });
+      context.error('generate failed:', error.message);
+      return json(500, { error: 'Failed to generate test cases', details: error.message });
     }
   },
 });
