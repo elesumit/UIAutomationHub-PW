@@ -520,6 +520,72 @@ CloudOps confirmed once per-repo — they don't need to re-do this for every PR,
 
 ---
 
+## AI Foundry (Azure OpenAI) Integration
+
+The AI Test Generator (`site/generator.html`) calls `/api/generate` on the Function App backend, which in turn calls Azure AI Foundry using the Function App's **managed identity** — no API key, no token to rotate.
+
+### Architecture
+
+```
+Browser → SWA (Entra auth) → /api/generate → Function App MI → Azure AI Foundry (gpt-4o)
+```
+
+### Terraform resources (`infra/aifoundry.tf`)
+
+| Resource | Name | Purpose |
+|---|---|---|
+| `azurerm_cognitive_account.aif` | `aif-<site>-prd` | Azure OpenAI account, Entra-only |
+| `azurerm_cognitive_deployment.model` | `gpt-4o` | gpt-4o on DataZoneStandard/50K-TPM |
+| `azurerm_role_assignment.func_aif_openai_user` | — | FA MI → Cognitive Services OpenAI User |
+
+**Critical — SKU**: Always use `DataZoneStandard`, never `GlobalStandard`. This is a data-zone requirement. If quota is unavailable in East US 2, request `DataZoneStandard` quota — do not fall back to `GlobalStandard`.
+
+### Function App app_settings (from `infra/functions.tf`)
+
+```hcl
+AIF_ENDPOINT        = azurerm_cognitive_account.aif.endpoint
+AIF_DEPLOYMENT_NAME = azurerm_cognitive_deployment.model.name
+AIF_API_VERSION     = "2024-10-21"
+```
+
+`GITHUB_COPILOT_TOKEN` is removed — generation no longer needs it.
+
+### Function App source (`api/src/app.js`)
+
+The `/api/generate` route uses the `openai` SDK with `@azure/identity` for MI auth:
+
+```javascript
+const { AzureOpenAI } = require('openai');
+const { DefaultAzureCredential, getBearerTokenProvider } = require('@azure/identity');
+
+const openAIClient = new AzureOpenAI({
+  endpoint:             process.env.AIF_ENDPOINT,
+  apiVersion:           process.env.AIF_API_VERSION,
+  azureADTokenProvider: getBearerTokenProvider(
+    new DefaultAzureCredential(),
+    'https://cognitiveservices.azure.com/.default'
+  ),
+});
+
+const result = await openAIClient.chat.completions.create({
+  model:    process.env.AIF_DEPLOYMENT_NAME,
+  messages: [ /* system + user prompts */ ],
+});
+```
+
+### What NOT to do with AI Foundry
+
+- **Do not set `local_auth_enabled = true`** on `azurerm_cognitive_account` — that re-enables API keys, defeating the Entra-only posture.
+- **Do not use `GlobalStandard` SKU** for the deployment — data-zone requirement blocks it.
+- **Do not store API keys** in app_settings or Key Vault — MI auth is the only path and no key exists.
+- **Do not call `models.inference.ai.azure.com`** — that is the GitHub Models endpoint, not Azure AI Foundry.
+
+### Pending (not blocking generation)
+
+Save-to-GitHub and repo-dispatch features still use `GITHUB_TOKEN`. These will be replaced with a GitHub App credential in a follow-up PR. The `GITHUB_TOKEN` app_setting is a placeholder in `functions.tf` until that PR lands.
+
+---
+
 ## What NOT to Do
 
 - Do not add server-side code, APIs, databases, or any backend components **except Function Apps following the standard above**
