@@ -35,6 +35,11 @@ public/
 *.env.keys
 auth.json
 
+# Private key material — NEVER commit
+*.pem
+*.key
+sf_private.key
+
 # Playwright auth/session state (live cookies & tokens)
 storage/
 **/storageState.json
