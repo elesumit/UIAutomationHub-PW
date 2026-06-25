@@ -17,8 +17,8 @@ const fs = require('fs');
 const path = require('path');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
-const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-techops';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'az-staticWeb-automation-pw';
 const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
 const XRAY_BASE = 'https://xray.cloud.getxray.app/api/v2';
 // Branch that save-to-github / upload-to-jira-github commit to. Defaults to main
