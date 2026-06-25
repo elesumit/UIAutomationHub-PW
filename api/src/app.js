@@ -576,6 +576,11 @@ app.http('execute-test', {
       const { testExecutionKey, testProfile } = await request.json();
       if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
 
+      const EXEC_KEY_RE = /^[A-Z]+-\d+$/;
+      if (!testExecutionKey || !EXEC_KEY_RE.test(testExecutionKey)) {
+        return json(400, { error: 'Invalid testExecutionKey format — expected e.g. BTC-123' });
+      }
+
       const ALLOWED_PROFILES = ['smoke', 'regression'];
       const safeProfile = ALLOWED_PROFILES.includes(testProfile) ? testProfile : 'smoke';
       if (testProfile && !ALLOWED_PROFILES.includes(testProfile)) {
