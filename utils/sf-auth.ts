@@ -29,7 +29,7 @@ function buildJwt(consumerKey: string, username: string, audience: string, priva
 function requestToken(authUrl: string, jwt: string): Promise<{ access_token: string; instance_url: string }> {
   return new Promise((resolve, reject) => {
     const body = [
-      'grant_type=urn%3Aietf%3Aparams%3Aoauth2%3Agrant-type%3Ajwt-bearer',
+      'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer',
       `assertion=${encodeURIComponent(jwt)}`,
     ].join('&');
 
