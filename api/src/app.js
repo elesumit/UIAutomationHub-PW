@@ -575,13 +575,20 @@ app.http('execute-test', {
     try {
       const { testExecutionKey, testProfile } = await request.json();
       if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
+
+      const ALLOWED_PROFILES = ['smoke', 'regression'];
+      const safeProfile = ALLOWED_PROFILES.includes(testProfile) ? testProfile : 'smoke';
+      if (testProfile && !ALLOWED_PROFILES.includes(testProfile)) {
+        context.warn(`execute-test: unknown testProfile "${testProfile}", defaulting to smoke`);
+      }
+
       const octokit = await octokitClient();
 
       await octokit.repos.createDispatchEvent({
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
         event_type: 'xray-trigger',
-        client_payload: { test_execution_key: testExecutionKey, test_plan_key: 'BTC-104', test_profile: testProfile || 'smoke' },
+        client_payload: { test_execution_key: testExecutionKey, test_plan_key: 'BTC-104', test_profile: safeProfile },
       });
 
       // Best-effort: resolve the freshly-created workflow run id.

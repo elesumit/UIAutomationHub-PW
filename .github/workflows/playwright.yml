@@ -80,15 +80,26 @@ jobs:
     steps:
       - name: Normalize inputs
         id: normalize
+        env:
+          # client_payload fields are free-form JSON (no GitHub schema enforcement).
+          # Pass them through env vars so bash quoting handles any special characters
+          # safely — never interpolate client_payload.* directly into run: scripts.
+          IN_TEST_PROFILE: ${{ github.event.inputs.test_profile || github.event.client_payload.test_profile || 'smoke' }}
+          IN_TEST_PLAN_KEY: ${{ github.event.inputs.test_plan_key || github.event.client_payload.test_plan_key || '' }}
         run: |
-          echo "test_profile=${{ github.event.inputs.test_profile || github.event.client_payload.test_profile || 'smoke' }}" >> $GITHUB_OUTPUT
-          echo "environment=${{ github.event.inputs.environment || 'QA' }}" >> $GITHUB_OUTPUT
-          echo "browser=${{ github.event.inputs.browser || 'chrome' }}" >> $GITHUB_OUTPUT
-          echo "headless_mode=${{ github.event.inputs.headless_mode || 'true' }}" >> $GITHUB_OUTPUT
-          echo "parallel_workers=${{ github.event.inputs.parallel_workers || '1' }}" >> $GITHUB_OUTPUT
-          echo "retry_failed_tests=${{ github.event.inputs.retry_failed_tests || '0' }}" >> $GITHUB_OUTPUT
-          echo "test_plan_key=${{ github.event.inputs.test_plan_key || github.event.client_payload.test_plan_key || '' }}" >> $GITHUB_OUTPUT
-          echo "custom_base_url=${{ github.event.inputs.custom_base_url || '' }}" >> $GITHUB_OUTPUT
+          # Validate profile against the allowed set — reject unexpected values
+          case "$IN_TEST_PROFILE" in
+            smoke|regression) ;;
+            *) echo "❌ Invalid test_profile: $IN_TEST_PROFILE"; exit 1 ;;
+          esac
+          printf 'test_profile=%s\n' "$IN_TEST_PROFILE" >> "$GITHUB_OUTPUT"
+          printf 'test_plan_key=%s\n' "$IN_TEST_PLAN_KEY" >> "$GITHUB_OUTPUT"
+          printf 'environment=%s\n' "${{ github.event.inputs.environment || 'QA' }}" >> "$GITHUB_OUTPUT"
+          printf 'browser=%s\n' "${{ github.event.inputs.browser || 'chrome' }}" >> "$GITHUB_OUTPUT"
+          printf 'headless_mode=%s\n' "${{ github.event.inputs.headless_mode || 'true' }}" >> "$GITHUB_OUTPUT"
+          printf 'parallel_workers=%s\n' "${{ github.event.inputs.parallel_workers || '1' }}" >> "$GITHUB_OUTPUT"
+          printf 'retry_failed_tests=%s\n' "${{ github.event.inputs.retry_failed_tests || '0' }}" >> "$GITHUB_OUTPUT"
+          printf 'custom_base_url=%s\n' "${{ github.event.inputs.custom_base_url || '' }}" >> "$GITHUB_OUTPUT"
 
       - name: 📥 Checkout code
         uses: actions/checkout@v4
