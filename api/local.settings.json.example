@@ -3,10 +3,9 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "GITHUB_COPILOT_TOKEN": "<github-pat-with-models-and-repo-dispatch>",
-    "GITHUB_TOKEN": "<github-pat-with-models-and-repo-dispatch>",
-    "GITHUB_OWNER": "veradigm-project-atlas",
-    "GITHUB_REPO": "Testing-Automation-PlayWright",
+    "GITHUB_TOKEN": "<github-pat-with-contents-and-actions-rw>",
+    "GITHUB_OWNER": "veradigm-techops",
+    "GITHUB_REPO": "az-staticWeb-automation-pw",
     "JIRA_BASE_URL": "https://veradigm.atlassian.net",
     "JIRA_USER": "<jira-account-email>",
     "JIRA_API_TOKEN": "<jira-api-token>",
