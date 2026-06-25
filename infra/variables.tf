@@ -107,13 +107,13 @@ variable "github_token" {
 variable "github_owner" {
   description = "GitHub org/owner of the test-automation repo the backend dispatches to"
   type        = string
-  default     = "veradigm-project-atlas"
+  default     = "veradigm-techops"
 }
 
 variable "github_repo" {
   description = "GitHub repo the backend dispatches workflows to / commits features to"
   type        = string
-  default     = "Testing-Automation-PlayWright"
+  default     = "az-staticWeb-automation-pw"
 }
 
 variable "github_target_branch" {
