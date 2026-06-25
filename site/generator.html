@@ -999,7 +999,7 @@
         } else {
           addExecutionStep(`✅ Test Case created: ${testKey}`, '✅');
         }
-        addExecutionStep(`✅ Linked ${allTestKeys.length} test(s) to BTC-104`, '✅');
+        addExecutionStep(`✅ Linked ${testKeys.length} test(s) to BTC-104`, '✅');
 
         updateProgress(80, 'Uploading to GitHub...', '📤');
         addExecutionStep('Uploading to GitHub repository...');
@@ -1017,8 +1017,7 @@
         } else {
           addExecutionStep(`❌ GitHub upload failed: ${uploadData.githubError || 'unknown error'}`, '❌');
           updateProgress(100, 'Jira done — GitHub failed', '⚠️');
-          document.getElementById('githubLink').href = `https://github.com/`;
-          document.getElementById('githubLink').textContent = 'GitHub upload failed';
+          document.getElementById('githubLink').style.display = 'none';
           showStatus(`${testCount} Test Case(s) created in Jira, but the GitHub commit FAILED: ${uploadData.githubError || 'unknown error'}`, 'error');
         }
 

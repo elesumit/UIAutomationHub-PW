@@ -269,7 +269,7 @@ app.http('save-to-github', {
         success: true,
         message: 'Test case saved to GitHub',
         path: filePath,
-        url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${filePath}`,
+        url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/${GITHUB_TARGET_BRANCH}/${filePath}`,
       });
     } catch (error) {
       context.error('save-to-github failed:', error.message);
