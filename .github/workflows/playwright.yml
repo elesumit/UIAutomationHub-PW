@@ -80,7 +80,13 @@ jobs:
         id: normalize
         run: |
           printf 'test_profile=%s\n'      "${{ github.event.inputs.test_profile }}"      >> "$GITHUB_OUTPUT"
-          printf 'test_plan_key=%s\n'     "${{ github.event.inputs.test_plan_key }}"      >> "$GITHUB_OUTPUT"
+          # Allowlist test_plan_key to BTC-<digits> — rejects shell metacharacters before
+          # the value is interpolated into curl URLs or echo lines in downstream steps.
+          RAW_PLAN_KEY="${{ github.event.inputs.test_plan_key }}"
+          if [ -n "$RAW_PLAN_KEY" ] && ! echo "$RAW_PLAN_KEY" | grep -qE '^[A-Z]+-[0-9]+$'; then
+            echo "❌ Invalid test_plan_key format: $RAW_PLAN_KEY (expected e.g. BTC-104)"; exit 1
+          fi
+          printf 'test_plan_key=%s\n'     "$RAW_PLAN_KEY"                                >> "$GITHUB_OUTPUT"
           printf 'environment=%s\n'       "${{ github.event.inputs.environment }}"        >> "$GITHUB_OUTPUT"
           printf 'browser=%s\n'           "${{ github.event.inputs.browser }}"            >> "$GITHUB_OUTPUT"
           printf 'headless_mode=%s\n'     "${{ github.event.inputs.headless_mode }}"      >> "$GITHUB_OUTPUT"
@@ -408,6 +414,7 @@ jobs:
         env:
           XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
           XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+          TEST_PLAN_KEY: ${{ needs.validate-inputs.outputs.test_plan_key }}
         run: |
           echo "📤 Uploading test results to Jira Xray..."
           
@@ -429,7 +436,7 @@ jobs:
           if [ -f "test-results/junit-report.xml" ]; then
             echo "📄 JUnit report found, uploading to Xray..."
             
-            UPLOAD_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/import/execution/junit?testPlanKey=${{ needs.validate-inputs.outputs.test_plan_key }}&projectKey=BTC" \
+            UPLOAD_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/import/execution/junit?testPlanKey=${TEST_PLAN_KEY}&projectKey=BTC" \
               -H "Content-Type: application/xml" \
               -H "Authorization: Bearer $TOKEN" \
               --data-binary @test-results/junit-report.xml \
@@ -452,7 +459,7 @@ jobs:
                 
                 # Add to step summary
                 echo "## 📊 Jira Xray Integration" >> $GITHUB_STEP_SUMMARY
-                echo "- **Test Plan:** ${{ needs.validate-inputs.outputs.test_plan_key }}" >> $GITHUB_STEP_SUMMARY
+                echo "- **Test Plan:** ${TEST_PLAN_KEY}" >> $GITHUB_STEP_SUMMARY
                 echo "- **Test Execution:** [$TEST_EXEC_KEY](https://veradigm.atlassian.net/browse/$TEST_EXEC_KEY)" >> $GITHUB_STEP_SUMMARY
               else
                 echo "⚠️ Upload succeeded but no Test Execution key returned"
