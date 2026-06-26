@@ -65,9 +65,16 @@ resource "azurerm_function_app_flex_consumption" "app" {
     AIF_DEPLOYMENT_NAME = azurerm_cognitive_deployment.model.name
     AIF_API_VERSION     = "2024-10-21"
 
-    # Secrets — KV references (trailing slash on SecretUri = "latest version").
+    # Secrets — KV references.
     # GITHUB_COPILOT_TOKEN removed — generation now uses Azure AI Foundry MI auth.
-    GITHUB_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.versionless_id}/)"
+    #
+    # GITHUB_TOKEN uses the VERSIONED secret id (no trailing slash) on purpose:
+    # a versionless reference (".../github-token/") is cached by the Functions
+    # host and is NOT re-resolved when the secret value rotates — so a token
+    # rotated by Terraform keeps serving the stale cached value until a ~24h
+    # refresh or a full restart. Pinning the version makes the app-setting string
+    # change on every rotation, forcing immediate re-resolution on the next deploy.
+    GITHUB_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.id})"
     JIRA_USER          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_user.versionless_id}/)"
     JIRA_API_TOKEN     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_api_token.versionless_id}/)"
     XRAY_CLIENT_ID     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_id.versionless_id}/)"
