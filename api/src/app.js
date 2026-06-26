@@ -576,7 +576,7 @@ app.http('execute-test', {
       const { testExecutionKey, testProfile } = await request.json();
       if (!GITHUB_TOKEN) return json(500, { error: 'GitHub token not configured' });
 
-      const EXEC_KEY_RE = /^[A-Z]+-\d+$/;
+      const EXEC_KEY_RE = /^[A-Z][A-Z0-9]+-\d+$/;
       if (!testExecutionKey || !EXEC_KEY_RE.test(testExecutionKey)) {
         return json(400, { error: 'Invalid testExecutionKey format — expected e.g. BTC-123' });
       }
