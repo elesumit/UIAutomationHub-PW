@@ -269,7 +269,7 @@ app.http('save-to-github', {
         success: true,
         message: 'Test case saved to GitHub',
         path: filePath,
-        url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${filePath}`,
+        url: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/${GITHUB_TARGET_BRANCH}/${filePath}`,
       });
     } catch (error) {
       context.error('save-to-github failed:', error.message);
@@ -457,12 +457,17 @@ app.http('upload-to-jira-github', {
       }
 
       // Persist the key-substituted feature to the framework repo.
+      // The Jira/Xray side already succeeded above; if the GitHub commit fails we
+      // still return 200 (the tests exist in Jira) but report githubUrl=null and a
+      // githubError so the UI can tell the truth instead of faking success.
       let githubUrl = null;
+      let githubError = null;
       try {
         const filePath = await commitFeatureToGitHub(filename, updatedContent, `Add test case ${mainTestKey}: ${featureSummary}`);
-        githubUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/${filePath}`;
-      } catch (githubError) {
-        context.warn(`GitHub upload failed: ${githubError.message}`);
+        githubUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/${GITHUB_TARGET_BRANCH}/${filePath}`;
+      } catch (e) {
+        githubError = e.message;
+        context.error(`GitHub commit failed (Jira succeeded): ${e.status || ''} ${e.message}`);
       }
 
       return json(200, {
@@ -472,6 +477,7 @@ app.http('upload-to-jira-github', {
         summary: featureSummary,
         jiraUrl: `${JIRA_BASE_URL}/browse/${mainTestKey}`,
         githubUrl,
+        githubError,
         message: `Test Case(s) created: ${[...testKeys, ...preconditionKeys].join(', ')} — linked to BTC-104`,
       });
     } catch (error) {

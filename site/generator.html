@@ -999,27 +999,32 @@
         } else {
           addExecutionStep(`✅ Test Case created: ${testKey}`, '✅');
         }
-        addExecutionStep(`✅ Saved to features/${filename}`, '✅');
-        addExecutionStep(`✅ Linked ${allTestKeys.length} test(s) to BTC-104`, '✅');
-        
+        addExecutionStep(`✅ Linked ${testKeys.length} test(s) to BTC-104`, '✅');
+
         updateProgress(80, 'Uploading to GitHub...', '📤');
         addExecutionStep('Uploading to GitHub repository...');
-        
-        // Small delay to show GitHub upload step
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        addExecutionStep(`✅ Uploaded to GitHub: features/${filename}`, '✅');
-        updateProgress(100, 'Upload complete!', '✅');
 
-        // Show both Jira and GitHub links
+        // Report the ACTUAL GitHub result — the backend returns githubUrl only when
+        // the commit succeeded, and githubError when it failed (Jira can succeed
+        // independently). Do not fake a success step here.
+        const testCount = allTestKeys.length;
+        if (githubUrl) {
+          addExecutionStep(`✅ Uploaded to GitHub: features/${filename}`, '✅');
+          updateProgress(100, 'Upload complete!', '✅');
+          document.getElementById('githubLink').href = githubUrl;
+          document.getElementById('githubLink').textContent = `View ${filename} in GitHub`;
+          showStatus(`${testCount} Test Case(s) created in Jira and committed to GitHub!`, 'success');
+        } else {
+          addExecutionStep(`❌ GitHub upload failed: ${uploadData.githubError || 'unknown error'}`, '❌');
+          updateProgress(100, 'Jira done — GitHub failed', '⚠️');
+          document.getElementById('githubLink').style.display = 'none';
+          showStatus(`${testCount} Test Case(s) created in Jira, but the GitHub commit FAILED: ${uploadData.githubError || 'unknown error'}`, 'error');
+        }
+
+        // Jira link is always valid since the Xray import succeeded above.
         document.getElementById('jiraLink').href = 'https://veradigm.atlassian.net/browse/BTC-104';
         document.getElementById('jiraLink').textContent = `View Test Plan BTC-104 in Jira`;
-        document.getElementById('githubLink').href = githubUrl;
-        document.getElementById('githubLink').textContent = `View ${filename} in GitHub`;
         document.getElementById('executionLinks').style.display = 'flex';
-
-        const testCount = allTestKeys.length;
-        showStatus(`${testCount} Test Case(s) created and linked to BTC-104!`, 'success');
 
       } catch (error) {
         addExecutionStep(`❌ Error: ${error.message}`, '❌');
