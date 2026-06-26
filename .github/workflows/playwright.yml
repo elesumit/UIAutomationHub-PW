@@ -66,8 +66,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       test_command: ${{ steps.validate.outputs.test_command }}
-      
+      test_profile: ${{ steps.normalize.outputs.test_profile }}
+      environment: ${{ steps.normalize.outputs.environment }}
+      browser: ${{ steps.normalize.outputs.browser }}
+      headless_mode: ${{ steps.normalize.outputs.headless_mode }}
+      parallel_workers: ${{ steps.normalize.outputs.parallel_workers }}
+      retry_failed_tests: ${{ steps.normalize.outputs.retry_failed_tests }}
+      test_plan_key: ${{ steps.normalize.outputs.test_plan_key }}
+      custom_base_url: ${{ steps.normalize.outputs.custom_base_url }}
+
     steps:
+      - name: Normalize inputs
+        id: normalize
+        run: |
+          printf 'test_profile=%s\n'      "${{ github.event.inputs.test_profile }}"      >> "$GITHUB_OUTPUT"
+          # Allowlist test_plan_key to BTC-<digits> — rejects shell metacharacters before
+          # the value is interpolated into curl URLs or echo lines in downstream steps.
+          RAW_PLAN_KEY="${{ github.event.inputs.test_plan_key }}"
+          if [ -n "$RAW_PLAN_KEY" ] && ! echo "$RAW_PLAN_KEY" | grep -qE '^[A-Z]+-[0-9]+$'; then
+            echo "❌ Invalid test_plan_key format: $RAW_PLAN_KEY (expected e.g. BTC-104)"; exit 1
+          fi
+          printf 'test_plan_key=%s\n'     "$RAW_PLAN_KEY"                                >> "$GITHUB_OUTPUT"
+          printf 'environment=%s\n'       "${{ github.event.inputs.environment }}"        >> "$GITHUB_OUTPUT"
+          printf 'browser=%s\n'           "${{ github.event.inputs.browser }}"            >> "$GITHUB_OUTPUT"
+          printf 'headless_mode=%s\n'     "${{ github.event.inputs.headless_mode }}"      >> "$GITHUB_OUTPUT"
+          printf 'parallel_workers=%s\n'  "${{ github.event.inputs.parallel_workers }}"   >> "$GITHUB_OUTPUT"
+          printf 'retry_failed_tests=%s\n' "${{ github.event.inputs.retry_failed_tests }}" >> "$GITHUB_OUTPUT"
+          printf 'custom_base_url=%s\n'   "${{ github.event.inputs.custom_base_url }}"    >> "$GITHUB_OUTPUT"
+
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
@@ -75,7 +101,7 @@ jobs:
         id: validate
         run: |
           # Process test profile input
-          TEST_PROFILE="${{ github.event.inputs.test_profile }}"
+          TEST_PROFILE="${{ steps.normalize.outputs.test_profile }}"
           echo "test_profile=$TEST_PROFILE" >> $GITHUB_OUTPUT
           
           # Build test command based on profile
@@ -97,16 +123,16 @@ jobs:
       - name: 📋 Display test configuration
         run: |
           echo "## 🎯 Veradigm Automation - Test Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "**Test Profile:** ${{ github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Headless Mode:** ${{ github.event.inputs.headless_mode }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Parallel Workers:** ${{ github.event.inputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Retry Count:** ${{ github.event.inputs.retry_failed_tests }}" >> $GITHUB_STEP_SUMMARY
-          
+          echo "**Test Profile:** ${{ steps.normalize.outputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.normalize.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Browser:** ${{ steps.normalize.outputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Headless Mode:** ${{ steps.normalize.outputs.headless_mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Parallel Workers:** ${{ steps.normalize.outputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Retry Count:** ${{ steps.normalize.outputs.retry_failed_tests }}" >> $GITHUB_STEP_SUMMARY
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Profile Details" >> $GITHUB_STEP_SUMMARY
-          case "${{ github.event.inputs.test_profile }}" in
+          case "${{ steps.normalize.outputs.test_profile }}" in
             smoke)
               echo "- Tests: Critical smoke tests tagged with @smoke" >> $GITHUB_STEP_SUMMARY
               echo "- Reports: HTML, JSON, JUnit in test-results/" >> $GITHUB_STEP_SUMMARY
@@ -144,7 +170,7 @@ jobs:
         run: |
           # Create .env file since it's gitignored
           # Check if custom URL is provided, otherwise use environment default
-          CUSTOM_URL="${{ github.event.inputs.custom_base_url }}"
+          CUSTOM_URL="${{ needs.validate-inputs.outputs.custom_base_url }}"
           
           if [ -n "$CUSTOM_URL" ]; then
             CE_PORTAL_URL="$CUSTOM_URL"
@@ -152,7 +178,7 @@ jobs:
             echo "Using custom URLs: $CUSTOM_URL"
           else
             # Set URLs based on selected environment
-            case "${{ github.event.inputs.environment }}" in
+            case "${{ needs.validate-inputs.outputs.environment }}" in
               QA)
                 CE_PORTAL_URL="${{ secrets.CE_QA_URL }}"
                 SF_URL="${{ secrets.SF_QA_URL }}"
@@ -166,16 +192,16 @@ jobs:
                 SF_URL="${{ secrets.SF_QA_URL }}"
                 ;;
             esac
-            echo "Using environment URLs for ${{ github.event.inputs.environment }}"
+            echo "Using environment URLs for ${{ needs.validate-inputs.outputs.environment }}"
           fi
           
-          echo "🌐 Browser selected: ${{ github.event.inputs.browser }}"
+          echo "🌐 Browser selected: ${{ needs.validate-inputs.outputs.browser }}"
           
           cat > .env << EOF
           # Environment Configuration
-          ENV=${{ github.event.inputs.environment }}
-          BROWSER=${{ github.event.inputs.browser }}
-          HEADLESS=${{ github.event.inputs.headless_mode }}
+          ENV=${{ needs.validate-inputs.outputs.environment }}
+          BROWSER=${{ needs.validate-inputs.outputs.browser }}
+          HEADLESS=${{ needs.validate-inputs.outputs.headless_mode }}
           
           # CE Portal URLs
           CE_QA_URL=$CE_PORTAL_URL
@@ -200,16 +226,16 @@ jobs:
           RECORD_VIDEO=false
           EOF
           
-          echo "Created .env file for ${{ github.event.inputs.environment }} environment"
+          echo "Created .env file for ${{ needs.validate-inputs.outputs.environment }} environment"
           
       - name: 🔧 Setup environment variables
         run: |
           echo "Setting up environment variables..."
-          echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-          echo "BROWSER=${{ github.event.inputs.browser }}" >> $GITHUB_ENV
-          echo "HEADLESS=${{ github.event.inputs.headless_mode }}" >> $GITHUB_ENV
+          echo "ENV=${{ needs.validate-inputs.outputs.environment }}" >> $GITHUB_ENV
+          echo "BROWSER=${{ needs.validate-inputs.outputs.browser }}" >> $GITHUB_ENV
+          echo "HEADLESS=${{ needs.validate-inputs.outputs.headless_mode }}" >> $GITHUB_ENV
           
-          case "${{ github.event.inputs.environment }}" in
+          case "${{ needs.validate-inputs.outputs.environment }}" in
             QA)
               echo "Environment: QA - Quality Assurance"
               ;;
@@ -218,7 +244,7 @@ jobs:
               ;;
           esac
           
-          echo "🎉 Environment configured for ${{ github.event.inputs.environment }}!"
+          echo "🎉 Environment configured for ${{ needs.validate-inputs.outputs.environment }}!"
 
       - name: 📢 Send Slack start notification
         if: always()
@@ -231,11 +257,11 @@ jobs:
           fi
           
           MESSAGE="🚀 *Test Execution Started*\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
-          MESSAGE="${MESSAGE}*Profile:* ${{ github.event.inputs.test_profile }}\n"
+          MESSAGE="${MESSAGE}*Profile:* ${{ needs.validate-inputs.outputs.test_profile }}\n"
           MESSAGE="${MESSAGE}*Triggered by:* @${{ github.actor }}\n"
           MESSAGE="${MESSAGE}*Branch:* ${{ github.ref_name }}\n"
           MESSAGE="${MESSAGE}*Workflow:* #${{ github.run_number }}\n"
-          MESSAGE="${MESSAGE}*Environment:* ${{ github.event.inputs.environment }}\n"
+          MESSAGE="${MESSAGE}*Environment:* ${{ needs.validate-inputs.outputs.environment }}\n"
           MESSAGE="${MESSAGE}━━━━━━━━━━━━━━━━━━━━━━━━"
           
           curl -X POST "$SLACK_WEBHOOK_URL" \
@@ -249,10 +275,10 @@ jobs:
         id: test_execution
         continue-on-error: true
         env:
-          ENV: ${{ github.event.inputs.environment }}
-          BROWSER: ${{ github.event.inputs.browser }}
-          HEADLESS: ${{ github.event.inputs.headless_mode }}
-          TEST_PROFILE: ${{ github.event.inputs.test_profile }}
+          ENV: ${{ needs.validate-inputs.outputs.environment }}
+          BROWSER: ${{ needs.validate-inputs.outputs.browser }}
+          HEADLESS: ${{ needs.validate-inputs.outputs.headless_mode }}
+          TEST_PROFILE: ${{ needs.validate-inputs.outputs.test_profile }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
@@ -260,17 +286,17 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          echo "🚀 Starting tests with profile: ${{ github.event.inputs.test_profile }}"
+          echo "🚀 Starting tests with profile: ${{ needs.validate-inputs.outputs.test_profile }}"
           ${{ needs.validate-inputs.outputs.test_command }}
           
       - name: 🔄 Retry failed tests
-        if: steps.test_execution.outcome == 'failure' && github.event.inputs.retry_failed_tests != '0'
+        if: steps.test_execution.outcome == 'failure' && needs.validate-inputs.outputs.retry_failed_tests != '0'
         continue-on-error: true
         env:
-          ENV: ${{ github.event.inputs.environment }}
-          BROWSER: ${{ github.event.inputs.browser }}
-          HEADLESS: ${{ github.event.inputs.headless_mode }}
-          TEST_PROFILE: ${{ github.event.inputs.test_profile }}
+          ENV: ${{ needs.validate-inputs.outputs.environment }}
+          BROWSER: ${{ needs.validate-inputs.outputs.browser }}
+          HEADLESS: ${{ needs.validate-inputs.outputs.headless_mode }}
+          TEST_PROFILE: ${{ needs.validate-inputs.outputs.test_profile }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
@@ -279,7 +305,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           echo "Retrying failed tests..."
-          RETRY_COUNT=${{ github.event.inputs.retry_failed_tests }}
+          RETRY_COUNT=${{ needs.validate-inputs.outputs.retry_failed_tests }}
           
           for i in $(seq 1 $RETRY_COUNT); do
             echo "Retry attempt $i of $RETRY_COUNT"
@@ -299,11 +325,11 @@ jobs:
           echo "## 🎯 Test Execution Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- **Profile:** ${{ github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Execution Mode:** ${{ github.event.inputs.headless_mode == 'true' && 'Headless' || 'Headed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workers:** ${{ github.event.inputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Profile:** ${{ needs.validate-inputs.outputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ needs.validate-inputs.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Browser:** ${{ needs.validate-inputs.outputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Execution Mode:** ${{ needs.validate-inputs.outputs.headless_mode == 'true' && 'Headless' || 'Headed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workers:** ${{ needs.validate-inputs.outputs.parallel_workers }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "### Reports Generated" >> $GITHUB_STEP_SUMMARY
@@ -329,7 +355,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cucumber-reports-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          name: cucumber-reports-${{ needs.validate-inputs.outputs.test_profile }}-${{ github.run_number }}
           path: test-results/
           retention-days: 30
           
@@ -337,7 +363,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-screenshots-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          name: test-screenshots-${{ needs.validate-inputs.outputs.test_profile }}-${{ github.run_number }}
           path: test-results/screenshots/
           retention-days: 14
 
@@ -345,7 +371,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-videos-${{ github.event.inputs.test_profile }}-${{ github.run_number }}
+          name: test-videos-${{ needs.validate-inputs.outputs.test_profile }}-${{ github.run_number }}
           path: test-results/videos/
           retention-days: 14
 
@@ -358,12 +384,12 @@ jobs:
             
             const summary = {
               runId: '${{ github.run_number }}',
-              testProfile: '${{ github.event.inputs.test_profile }}',
-              environment: '${{ github.event.inputs.environment }}',
-              browser: '${{ github.event.inputs.browser }}',
-              headless: '${{ github.event.inputs.headless_mode }}',
-              parallelWorkers: '${{ github.event.inputs.parallel_workers }}',
-              retryCount: '${{ github.event.inputs.retry_failed_tests }}',
+              testProfile: '${{ needs.validate-inputs.outputs.test_profile }}',
+              environment: '${{ needs.validate-inputs.outputs.environment }}',
+              browser: '${{ needs.validate-inputs.outputs.browser }}',
+              headless: '${{ needs.validate-inputs.outputs.headless_mode }}',
+              parallelWorkers: '${{ needs.validate-inputs.outputs.parallel_workers }}',
+              retryCount: '${{ needs.validate-inputs.outputs.retry_failed_tests }}',
               timestamp: new Date().toISOString(),
               status: '${{ job.status }}',
               framework: 'Cucumber + Playwright',
@@ -384,10 +410,11 @@ jobs:
 
       - name: 📊 Upload test results to Jira Xray
         id: xray_upload
-        if: always() && github.event.inputs.test_plan_key != ''
+        if: always() && needs.validate-inputs.outputs.test_plan_key != ''
         env:
           XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
           XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+          TEST_PLAN_KEY: ${{ needs.validate-inputs.outputs.test_plan_key }}
         run: |
           echo "📤 Uploading test results to Jira Xray..."
           
@@ -409,7 +436,7 @@ jobs:
           if [ -f "test-results/junit-report.xml" ]; then
             echo "📄 JUnit report found, uploading to Xray..."
             
-            UPLOAD_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/import/execution/junit?testPlanKey=${{ github.event.inputs.test_plan_key }}&projectKey=BTC" \
+            UPLOAD_RESPONSE=$(curl -X POST "https://xray.cloud.getxray.app/api/v2/import/execution/junit?testPlanKey=${TEST_PLAN_KEY}&projectKey=BTC" \
               -H "Content-Type: application/xml" \
               -H "Authorization: Bearer $TOKEN" \
               --data-binary @test-results/junit-report.xml \
@@ -432,7 +459,7 @@ jobs:
                 
                 # Add to step summary
                 echo "## 📊 Jira Xray Integration" >> $GITHUB_STEP_SUMMARY
-                echo "- **Test Plan:** ${{ github.event.inputs.test_plan_key }}" >> $GITHUB_STEP_SUMMARY
+                echo "- **Test Plan:** ${TEST_PLAN_KEY}" >> $GITHUB_STEP_SUMMARY
                 echo "- **Test Execution:** [$TEST_EXEC_KEY](https://veradigm.atlassian.net/browse/$TEST_EXEC_KEY)" >> $GITHUB_STEP_SUMMARY
               else
                 echo "⚠️ Upload succeeded but no Test Execution key returned"
@@ -490,7 +517,7 @@ jobs:
           fi
           
           # Calculate duration
-          DURATION="${{ github.event.inputs.parallel_workers }}m"
+          DURATION="${{ needs.validate-inputs.outputs.parallel_workers }}m"
           
           # Determine status
           TOTAL=${{ steps.parse_results.outputs.total }}
@@ -509,7 +536,7 @@ jobs:
           MESSAGE="${STATUS} *${STATUS_TEXT}*\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
           MESSAGE="${MESSAGE}*Total:* ${TOTAL} | *Passed:* ${PASSED} ✅ | *Failed:* ${FAILED} ❌\n"
           MESSAGE="${MESSAGE}*Duration:* ${DURATION}\n"
-          MESSAGE="${MESSAGE}*Environment:* ${{ github.event.inputs.environment }}\n"
+          MESSAGE="${MESSAGE}*Environment:* ${{ needs.validate-inputs.outputs.environment }}\n"
           MESSAGE="${MESSAGE}━━━━━━━━━━━━━━━━━━━━━━━━\n"
           
           # Add links

@@ -33,11 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: � Check for duplicate runs
+      - name: 🔍 Check for duplicate runs
         uses: actions/github-script@v7
+        env:
+          EXEC_KEY: ${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}
         with:
           script: |
-            const testExecutionKey = '${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}';
+            const testExecutionKey = process.env.EXEC_KEY;
             const currentRunId = ${{ github.run_id }};
             
             // Get all workflow runs for this workflow in the last 5 minutes
@@ -79,49 +81,51 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: 📝 Create .env file
+        env:
+          XRAY_TEST_EXEC_KEY: ${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}
         run: |
           cat > .env << EOF
           # Environment Configuration
           ENV=QA
           BROWSER=chromium
           HEADLESS=true
-          
+
           # CE Portal URLs
           CE_QA_URL=${{ secrets.CE_QA_URL }}
           CE_UAT_URL=${{ secrets.CE_UAT_URL }}
-          
+
           # Salesforce URLs
           SF_QA_URL=${{ secrets.SF_QA_URL }}
           SF_UAT_URL=${{ secrets.SF_UAT_URL }}
-          
+
           # Credentials
           CE_UserName=${{ secrets.CE_USERNAME }}
           CE_Password=${{ secrets.CE_PASSWORD }}
           CEUAT_UserName=${{ secrets.CEUAT_USERNAME }}
           CEUAT_Password=${{ secrets.CEUAT_PASSWORD }}
-          
+
           SF_UserName=${{ secrets.SF_USERNAME }}
           SF_Password=${{ secrets.SF_PASSWORD }}
           SFQA_UserName=${{ secrets.SFQA_USERNAME }}
           SFQA_Password=${{ secrets.SFQA_PASSWORD }}
-          
+
           # Xray Configuration
           XRAY_CLIENT_ID=${{ secrets.XRAY_CLIENT_ID }}
           XRAY_CLIENT_SECRET=${{ secrets.XRAY_CLIENT_SECRET }}
           XRAY_PROJECT_KEY=BTC
-          XRAY_TEST_EXECUTION_KEY=${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}
-          
+          XRAY_TEST_EXECUTION_KEY=${XRAY_TEST_EXEC_KEY}
+
           # Execution Environment
           CE_Portal_Execution_Env=QA
-          
+
           # Jira Integration
           JIRA_USER=${{ secrets.JIRA_USER }}
           JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
-          
+
           # Slack
           SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}
           ENABLE_SLACK_NOTIFICATIONS=true
-          
+
           # Video Recording
           RECORD_VIDEO=false
           EOF
