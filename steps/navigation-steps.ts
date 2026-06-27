@@ -849,6 +849,39 @@ When('I click on {string}', async function (elementName: string) {
   }
   }
   
+  // Strategy 3: search inside iframes. Salesforce Setup renders classic
+  // Visualforce detail pages (e.g. the User detail page with Edit / Login /
+  // Reset Password buttons) inside an iframe, so top-level page locators never
+  // see them. Walk every child frame and try button/input/link selectors.
+  if (!clicked) {
+    const frameSelectors = [
+      `input[type="button"][value="${elementName}"]`,
+      `input[type="submit"][value="${elementName}"]`,
+      `input[value="${elementName}"]`,
+      `button:text-is("${elementName}")`,
+      `button:has-text("${elementName}")`,
+      `a:has-text("${elementName}")`,
+      `[title="${elementName}"]`,
+    ];
+    for (const frame of this.page.frames()) {
+      if (frame === this.page.mainFrame()) continue;
+      for (const sel of frameSelectors) {
+        try {
+          const loc = frame.locator(sel).first();
+          if (await loc.count() === 0) continue;
+          const isVisible = await loc.isVisible({ timeout: 2000 }).catch(() => false);
+          if (!isVisible) continue;
+          await loc.scrollIntoViewIfNeeded().catch(() => {});
+          await loc.click({ timeout: 5000 });
+          ReportLogger.logInfo(`✅ Clicked "${elementName}" inside iframe via "${sel}"`);
+          clicked = true;
+          break;
+        } catch { continue; }
+      }
+      if (clicked) break;
+    }
+  }
+
   // Fallback to LocatorPro's intelligent text-based clicking, but filter out navigation links
   if (!clicked) {
     ReportLogger.logInfo(`🔍 Using LocatorPro text-based search for: "${elementName}"`);

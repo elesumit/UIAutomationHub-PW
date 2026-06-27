@@ -57,9 +57,10 @@ export class BrowserManager {
 
   static async createPage(): Promise<Page> {
     this.page = await this.context.newPage();
-    // Set viewport to typical laptop resolution
-    const screenSize = { width: 1366, height: 768 };
-    await this.page.setViewportSize(screenSize);
+    // Match the context viewport (1920x1080). The old 1366x768 override clipped
+    // Salesforce Setup detail pages (right-hand columns / action buttons fell
+    // off-screen). Keep the larger size so the full SF layout is in view.
+    await this.page.setViewportSize({ width: 1920, height: 1080 });
     return this.page;
   }
 
