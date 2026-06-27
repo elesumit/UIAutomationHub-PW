@@ -8,10 +8,6 @@ Feature: Create Case in CE Portal and verify in Salesforce
 
  #Login to SF and verify the case
     #  When I navigate to Salesforce ""
-    # When I enter "" in "SFQA_UserName"
-    # When I enter "" in "SF_Password"
-    # When I click on "Log In to Sandbox"
-    # When I wait for 5 seconds
     # #When I close the permission popup
     # #Search for Console
     # When I click on "App Launcher"

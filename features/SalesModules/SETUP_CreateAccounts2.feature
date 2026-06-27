@@ -9,10 +9,7 @@ Feature: Test Data Setup — Create Test Accounts in QA Sandbox
   @TC.SETUP.Account2
   Scenario Outline: Create all required test accounts
     When I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+
     When I click on "App Launcher"
     When I enter "<app_name>" in "Search apps and items..."
     When I click on "<app_name>"

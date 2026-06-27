@@ -8,16 +8,22 @@ Feature: Login into SF and switch the profiles between Sales and Service
   
     # Salesforce Verification
     When I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+    # When I enter "" in "SFQA_UserName"
+    # When I enter "" in "SF_Password"
+    # When I click on "Log In to Sandbox"
+    # When I wait for 5 seconds
     #When I click on "setupGear"
     When I click on "Setup"
     When I click on "Setup"
 
-
-
+    When I enter "Support Agent Test 1" in "Search Setup"
+    When I click on "Support Agent Test 1"
+    When I wait for 3 seconds
+    When I click on "Login"
+    When I wait for 3 seconds
+    
+    Then I should see "Logged in as Support Agent Test 1"
+    
     # When I enter "Service Console" in "Search apps and items..."
     # When I click on "Service Console"
     # When I wait for 3 seconds

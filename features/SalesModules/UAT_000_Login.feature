@@ -10,10 +10,7 @@ Feature: UAT.000.01 - Login and App Verification
 
     # Salesforce Verification - Login once and verify case
     When I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+ 
     When I click on "App Launcher"
     When I enter "Sales Console" in "Search apps and items..."
     When I click on "Sales Console"

@@ -11,10 +11,7 @@ Feature: Test Data Setup — Create Leads in QA Sandbox
   Scenario: Create test lead
     Given I load test data from CSV file "testdata/leads.csv" row "1"
     When I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+
     When I click on "App Launcher"
     When I enter "${app_name}" in "Search apps and items..."
     When I click on "${app_name}"

@@ -88,7 +88,7 @@ export class BrowserManager {
     const ctx  = await this.browser.newContext({ viewport: { width: 1366, height: 768 } });
     const page = await ctx.newPage();
     try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      await page.goto(url, { waitUntil: 'load', timeout: 60000 });
       await ctx.storageState({ path: outputPath });
     } finally {
       await page.close();

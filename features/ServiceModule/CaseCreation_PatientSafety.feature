@@ -70,10 +70,7 @@ Feature: Create Patient Safety Cases and Validate in Salesforce - Two Cases with
 
     # ── SALESFORCE VALIDATION ─────────────────────────────────────────────
     When I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+    When I wait for 2 seconds
     When I click on "App Launcher"
     When I enter "Service Console" in "Search apps and items..."
     When I click on "Service Console"

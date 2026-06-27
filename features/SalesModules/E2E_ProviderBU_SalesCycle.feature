@@ -14,10 +14,10 @@ Feature: E2E - Provider BU Sales Cycle (Lead to Closed Won)
 
     # -- Login --
     Given I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+    # When I enter "" in "SFQA_UserName"
+    # When I enter "" in "SF_Password"
+    # When I click on "Log In to Sandbox"
+    # When I wait for 5 seconds
     Then I verify "Sales Console" is visible
 
     # -- Verify Sales Console navigation tabs --
@@ -279,10 +279,10 @@ Feature: E2E - Provider BU Sales Cycle (Lead to Closed Won)
 
     # -- Login --
     Given I navigate to Salesforce ""
-    When I enter "" in "SFQA_UserName"
-    When I enter "" in "SF_Password"
-    When I click on "Log In to Sandbox"
-    When I wait for 5 seconds
+    # When I enter "" in "SFQA_UserName"
+    # When I enter "" in "SF_Password"
+    # When I click on "Log In to Sandbox"
+    # When I wait for 5 seconds
 
     # -- Navigate to an existing open Provider Opportunity --
     When I click on "Show Navigation Menu"
