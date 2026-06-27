@@ -18,8 +18,11 @@ Given('I navigate to Salesforce ""', async function () {
   if (!baseUrl) {
     throw new Error('Salesforce Base URL is not set. Please check your environment configuration.');
   }
-  await this.page.goto(baseUrl);
-  await this.page.waitForLoadState('networkidle');
+  // Salesforce keeps background streaming/polling connections open, so
+  // 'networkidle' never settles and times out even though the app is fully
+  // usable. Wait for DOM content, then give 'networkidle' a best-effort window.
+  await this.page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
   await this.page.screenshot({ path: `test-results/screenshots/salesforce-homepage_${Date.now()}.png`, fullPage: true });
   ReportLogger.logInfo(`Navigated to Salesforce: ${baseUrl}`);
 });
@@ -30,8 +33,8 @@ Given('I navigate to CE Portal ""', async function () {
   if (!baseUrl) {
     throw new Error('CE Portal Base URL is not set. Please check your environment configuration.');
   }
-  await this.page.goto(baseUrl);
-  await this.page.waitForLoadState('networkidle');
+  await this.page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
   await this.page.screenshot({ path: `test-results/screenshots/ceportal-homepage_${Date.now()}.png`, fullPage: true });
   ReportLogger.logInfo(`Navigated to CE Portal: ${baseUrl}`);
 });
