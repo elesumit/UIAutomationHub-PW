@@ -20,7 +20,7 @@ permissions:
 jobs:
   deploy:
     # Skip on template repo — only run on site repos created from this template
-    if: github.repository != 'veradigm-techops/az-staticWeb-template'
+    if: github.repository != 'techops/az-staticWeb-template'
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -44,9 +44,8 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ steps.config.outputs.MI_CLIENT_ID }}
-          tenant-id: 21d8e422-7fd3-4634-8c8a-01dfde9a5502
-          subscription-id: 54305029-7d35-40a9-8bf9-950963b449cc
+          client-id: c990a453-711f-44d9-9285-8d4caa179d30
+          tenant-id: 21f2717a-4fc6-4665-b7ad-b490a46167e3
 
       - name: Deploy to Function App
         uses: Azure/functions-action@v1

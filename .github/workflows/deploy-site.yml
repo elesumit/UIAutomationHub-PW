@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build:
     # Skip on template repo — only run on site repos created from this template
-    if: github.repository != 'veradigm-techops/az-staticWeb-template'
+    if: github.repository != 'techops/az-staticWeb-template'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -6,9 +6,8 @@ first PR merges; nothing else regenerates this file.
 ## Identity
 
 - **Site:** `automation-pw`
-- **URL:** https://automation-pw.internal.veradigm.com
-- **Jira ticket:** [CLPASD-44](https://veradigm.atlassian.net/browse/CLPASD-44)
-- **Resource group:** `rg-staticweb-automation-pw-prd`
+- **URL:** https://automationhub.com
+- **Resource group:** `my-automation-rg`
 - **Per-site managed identity:** `mi-staticweb-automation-pw` (used by `deploy-infra.yml`)
 - **Per-site Entra app registration:** `app-staticweb-automation-pw-sso`
   - **App (client) ID:** `ca02bb25-1a23-4a92-af14-07e36ad28815`
@@ -16,7 +15,7 @@ first PR merges; nothing else regenerates this file.
 
 ## Default access
 
-Out of the box, **any authenticated Veradigm tenant user** can sign in to this
+Out of the box, **any authenticated tenant user** can sign in to this
 site — same as every other static site on the platform. The SWA `staticwebapp.config.json`
 gates `/*` behind `["authenticated"]`, and the per-site app reg above issues
 tokens to anyone in the tenant.

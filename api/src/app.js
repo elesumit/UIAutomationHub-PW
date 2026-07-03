@@ -17,9 +17,9 @@ const fs = require('fs');
 const path = require('path');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-techops';
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'techops';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'az-staticWeb-automation-pw';
-const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
+const JIRA_BASE_URL = process.env.JIRA_BASE_URL || 'https://automationhubpw.atlassian.net';
 const XRAY_BASE = 'https://xray.cloud.getxray.app/api/v2';
 // Branch that save-to-github / upload-to-jira-github commit to. Defaults to main
 // (legacy behaviour); set GITHUB_TARGET_BRANCH to a non-default branch to avoid
@@ -645,7 +645,7 @@ app.http('check-workflow-status', {
       const runId = request.query.get('runId');
       if (!runId) return json(400, { error: 'Run ID is required' });
       const response = await axios.get(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}`, {
-        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Veradigm-Automation-Hub' },
+        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Automation-Hub' },
         validateStatus: (s) => s < 500,
       });
       if (response.status === 404 || response.status !== 200) {

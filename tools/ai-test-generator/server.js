@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const GITHUB_TOKEN = process.env.GITHUB_COPILOT_TOKEN || process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'project-atlas';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
 
 /**
@@ -457,7 +457,7 @@ app.get('/api/jira-issue-types', async (req, res) => {
     const jiraAuth = Buffer.from(`${JIRA_USER}:${JIRA_API_TOKEN}`).toString('base64');
     
     const response = await axios.get(
-      'https://veradigm.atlassian.net/rest/api/3/project/BTC',
+      'https://automationhubpw.atlassian.net/rest/api/3/project/BTC',
       {
         headers: {
           'Authorization': `Basic ${jiraAuth}`,
@@ -487,7 +487,7 @@ app.get('/api/jira/story/:storyId', async (req, res) => {
     console.log(`📖 Fetching Jira story: ${storyId}`);
     
     // Jira API credentials
-    const jiraBaseUrl = process.env.JIRA_BASE_URL || 'https://veradigm.atlassian.net';
+    const jiraBaseUrl = process.env.JIRA_BASE_URL || 'https://automationhubpw.atlassian.net';
     const jiraEmail = process.env.JIRA_USER || 'sumit.gupta2@veradigm.com';
     const jiraApiToken = process.env.JIRA_API_TOKEN;
     
@@ -802,7 +802,7 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
         const jiraAuth = Buffer.from(`${JIRA_USER}:${JIRA_API_TOKEN}`).toString('base64');
         
         const issueResponse = await axios.get(
-          'https://veradigm.atlassian.net/rest/api/3/issue/BTC-104',
+          'https://automationhubpw.atlassian.net/rest/api/3/issue/BTC-104',
           {
             headers: {
               'Authorization': `Basic ${jiraAuth}`,
@@ -897,7 +897,7 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
       testKey: mainTestKey,
       allTestKeys: allTestKeys,
       summary: featureSummary,
-      jiraUrl: `https://veradigm.atlassian.net/browse/${mainTestKey}`,
+      jiraUrl: `https://automationhubpw.atlassian.net/browse/${mainTestKey}`,
       githubUrl: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/features/${filename}`,
       message: `Test Case(s) created: ${allTestKeys.join(', ')} - All linked to BTC-104`
     });
@@ -960,7 +960,7 @@ app.post('/api/create-test-execution', async (req, res) => {
     for (const testKey of testKeys) {
       try {
         const issueResponse = await axios.get(
-          `https://veradigm.atlassian.net/rest/api/3/issue/${testKey}`,
+          `https://automationhubpw.atlassian.net/rest/api/3/issue/${testKey}`,
           {
             headers: {
               'Authorization': `Basic ${jiraAuth}`,
@@ -1041,7 +1041,7 @@ app.post('/api/create-test-execution', async (req, res) => {
     try {
       // Get BTC-104 numeric ID
       const testPlanResponse = await axios.get(
-        'https://veradigm.atlassian.net/rest/api/3/issue/BTC-104',
+        'https://automationhubpw.atlassian.net/rest/api/3/issue/BTC-104',
         {
           headers: {
             'Authorization': `Basic ${jiraAuth}`,
@@ -1095,7 +1095,7 @@ app.post('/api/create-test-execution', async (req, res) => {
     res.json({
       success: true,
       testExecutionKey,
-      jiraUrl: `https://veradigm.atlassian.net/browse/${testExecutionKey}`,
+      jiraUrl: `https://automationhubpw.atlassian.net/browse/${testExecutionKey}`,
       message: 'Test Execution created successfully'
     });
     
@@ -1307,7 +1307,7 @@ app.get('/api/check-workflow-status', async (req, res) => {
         headers: {
           'Authorization': `Bearer ${GITHUB_TOKEN}`,
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Veradigm-AI-Test-Generator'
+          'User-Agent': 'AI-Test-Generator'
         },
         validateStatus: (status) => status < 500 // Don't throw on 4xx errors
       }

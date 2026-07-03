@@ -1,6 +1,6 @@
-# CloudOps Pre-Flight — `automation-pw` Function App backend (CLPASD-44)
+# CloudOps Pre-Flight — `automation-pw` 
 
-**Owner:** sumit.gupta2@veradigm.com · **Reviewer/RRE:** aharden · **CloudOps contact:** Sai Gajavalli
+**Owner:** sumit.ggg@gmail.com 
 
 > **Why this exists:** The `automation-pw` site is adding a backend (`/api/*`) as an
 > Azure **Function App (FC1 Flex Consumption)**, per `agents.md → Adding a Function App
@@ -20,10 +20,10 @@
 
 | Item | Value |
 |---|---|
-| Subscription | Neon — Veradigm Tools — `54305029-7d35-40a9-8bf9-950963b449cc` |
-| Tenant | `21d8e422-7fd3-4634-8c8a-01dfde9a5502` |
-| Resource group | `rg-staticweb-automation-pw-prd` |
-| Per-site runner MI (client id) | `adfdfd01-703d-42cb-8b2b-ebc0a3779a9b` |
+| Subscription | Neon — Veradigm Tools — `c4b21de8-bb1c-4efb-b4ec-9431dc344558` |
+| Tenant | `21f2717a-4fc6-4665-b7ad-b490a46167e3` |
+| Resource group | `my-automation-rg` |
+| Per-site runner MI (client id) | `c990a453-711f-44d9-9285-8d4caa179d30` |
 | Runtime storage account (created by TF) | `st<...>` — see `infra/storage.tf` `local.func_sa_name` |
 | Region | East US 2 (`eastus2`) |
 
@@ -36,10 +36,10 @@ Tenant policy *"Storage accounts should disable public network access"* blocks o
 (`public_network_access_enabled = true` + `network_rules.default_action = Allow`, gated by
 Entra at the credential layer, keys disabled).
 
-- **Action:** Register a policy exemption scoped to **`rg-staticweb-automation-pw-prd`** (or
+- **Action:** Register a policy exemption scoped to **`my-automation-rg`** (or
   to the specific SA once its name is known) for the deny policy assignment that enforces
   storage public-access disablement.
-- **Same pattern previously granted for:** `media-curation`, `veradigm-campaign-planning-tool`.
+- **Same pattern previously granted for:** `media-curation`, `campaign-planning-tool`.
 
 ### 2. Runner-MI ABAC condition expansion
 The runner MI (`adfdfd01-…`) holds **Role Based Access Control Administrator** on the
@@ -67,8 +67,8 @@ RBAC propagation lag, not the initial absence of the grant.)
 - **Action (run once the SA exists, or pre-create against the planned name):**
 
 ```bash
-RUNNER_MI=adfdfd01-703d-42cb-8b2b-ebc0a3779a9b
-SA_ID=/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/rg-staticweb-automation-pw-prd/providers/Microsoft.Storage/storageAccounts/<func_sa_name>
+RUNNER_MI=c990a453-711f-44d9-9285-8d4caa179d30
+SA_ID=/subscriptions/c4b21de8-bb1c-4efb-b4ec-9431dc344558/resourceGroups/my-automation-rg/providers/Microsoft.Storage/storageAccounts/<func_sa_name>
 for ROLE in "Storage Blob Data Contributor" "Storage Queue Data Contributor" "Storage Table Data Contributor"; do
   az role assignment create --assignee "$RUNNER_MI" --role "$ROLE" --scope "$SA_ID"
 done
@@ -78,7 +78,7 @@ done
 
 ## Confirmation checklist (gates the infra PR merge)
 
-- [ ] **#1** Policy exemption registered for `rg-staticweb-automation-pw-prd`
+- [ ] **#1** Policy exemption registered for `my-automation-rg`
 - [ ] **#2** Runner-MI ABAC condition expanded with the three Storage data-role GUIDs
 - [ ] **#3** Runner MI granted Blob/Queue/Table Data Contributor on the runtime SA
 - [ ] CloudOps (Sai) confirmed in the PR thread
@@ -90,18 +90,18 @@ done
 
 ## Jira ticket body (copy-paste)
 
-> **Summary:** CloudOps pre-flight for `automation-pw` Function App backend (CLPASD-44)
+> **Summary:** CloudOps pre-flight for `automation-pw` Function App backend
 >
 > **Description:**
 > Adding an FC1 Function App backend to the `automation-pw` static-web site (RG
-> `rg-staticweb-automation-pw-prd`, Neon sub `54305029-7d35-40a9-8bf9-950963b449cc`).
-> Per the Veradigm static-web Function App standard, please complete before we merge the
+> `my-automation-rg`, Neon sub `c4b21de8-bb1c-4efb-b4ec-9431dc344558`).
+> Per the static-web Function App standard, please complete before we merge the
 > infra PR:
 > 1. Policy exemption for storage public-network-access on the RG.
-> 2. Expand runner MI (`adfdfd01-703d-42cb-8b2b-ebc0a3779a9b`) ABAC to allow granting
+> 2. Expand runner MI (`c990a453-711f-44d9-9285-8d4caa179d30`) ABAC to allow granting
 >    Storage Blob/Queue/Table Data Contributor (`ba92f5b4-…`, `974c5e8b-…`, `0a9a7e1f-…`).
 > 3. Pre-grant the runner MI those three Storage data roles on the new runtime storage
 >    account (name in `infra/storage.tf`).
 >
 > Stateless backend → runtime storage only, no data tables. Same pattern as
-> `media-curation` / `veradigm-campaign-planning-tool`.
+> `media-curation` / `campaign-planning-tool`.

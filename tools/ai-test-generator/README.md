@@ -32,7 +32,7 @@ Add to your `.env` file in the project root:
 
 ```env
 GITHUB_COPILOT_TOKEN=ghp_your_token_here
-GITHUB_OWNER=veradigm-project-atlas
+GITHUB_OWNER=project-atlas
 GITHUB_REPO=Testing-Automation-PlayWright
 AI_GENERATOR_PORT=3002
 ```

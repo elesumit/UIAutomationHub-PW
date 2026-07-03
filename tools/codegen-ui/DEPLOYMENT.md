@@ -43,7 +43,7 @@ Host on a shared Windows/Linux server that all testers can access.
 2. **Clone the repository:**
    ```bash
    git clone <repo-url>
-   cd Veradigm-Automation-PW
+   cd Automation-PW
    npm install
    ```
 
@@ -79,7 +79,7 @@ Host on a shared Windows/Linux server that all testers can access.
 2. **Clone and setup:**
    ```bash
    git clone <repo-url>
-   cd Veradigm-Automation-PW
+   cd Automation-PW
    npm install
    ```
 

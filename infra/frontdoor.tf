@@ -73,7 +73,7 @@ resource "azurerm_cdn_frontdoor_origin" "dr" {
   weight                         = 1000
 }
 
-# ── Custom Domain — <siteName>.internal.veradigm.com ──
+# ── Custom Domain — <siteName>.com ──
 resource "azurerm_cdn_frontdoor_custom_domain" "site" {
   name                     = replace(var.custom_domain, ".", "-")
   cdn_frontdoor_profile_id = data.azurerm_cdn_frontdoor_profile.shared.id
@@ -85,7 +85,7 @@ resource "azurerm_cdn_frontdoor_custom_domain" "site" {
   }
 }
 
-# ── Route — <siteName>.internal.veradigm.com → og-<siteName> ──
+# ── Route — <siteName>.com → og-<siteName> ──
 resource "azurerm_cdn_frontdoor_route" "site" {
   name                          = "route-${var.site_name}"
   cdn_frontdoor_endpoint_id     = azurerm_cdn_frontdoor_endpoint.site.id
@@ -113,7 +113,7 @@ resource "azurerm_cdn_frontdoor_custom_domain_association" "site" {
 }
 
 # =============================================================================
-# DNS Records — automated in the internal.veradigm.com Azure DNS zone
+# DNS Records — automated in the internal.com Azure DNS zone
 # =============================================================================
 
 data "azurerm_dns_zone" "internal" {
@@ -121,7 +121,7 @@ data "azurerm_dns_zone" "internal" {
   resource_group_name = var.dns_zone_resource_group
 }
 
-# CNAME: <siteName>.internal.veradigm.com → Front Door endpoint
+# CNAME: <siteName>.com → Front Door endpoint
 resource "azurerm_dns_cname_record" "site" {
   name                = var.site_name
   zone_name           = data.azurerm_dns_zone.internal.name
@@ -130,7 +130,7 @@ resource "azurerm_dns_cname_record" "site" {
   record              = azurerm_cdn_frontdoor_endpoint.site.host_name
 }
 
-# TXT: _dnsauth.<siteName>.internal.veradigm.com — Front Door domain validation
+# TXT: _dnsauth.<siteName>.com — Front Door domain validation
 resource "azurerm_dns_txt_record" "validation" {
   name                = "_dnsauth.${var.site_name}"
   zone_name           = data.azurerm_dns_zone.internal.name

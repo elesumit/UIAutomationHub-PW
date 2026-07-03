@@ -92,12 +92,12 @@ This guide explains how to trigger Playwright test execution from Jira Xray usin
 
 In the webhook configuration, replace:
 - `YOUR_ORG` → Your GitHub organization/username
-- `YOUR_REPO` → Repository name (e.g., `Veradigm-Automation-PW`)
+- `YOUR_REPO` → Repository name (e.g., `Automation-PW`)
 - `YOUR_GITHUB_PAT` → The token from Step 1
 
 **Example URL:**
 ```
-https://api.github.com/repos/veradigm/Veradigm-Automation-PW/dispatches
+https://api.github.com/repos/Automation-PW/dispatches
 ```
 
 ---
@@ -320,7 +320,7 @@ curl -X POST \
 
 You can also manually trigger tests from GitHub Actions UI:
 
-1. Go to **Actions** → **🎭 Veradigm Automation - Playwright Test Executor**
+1. Go to **Actions** → **🎭 Automation - Playwright Test Executor**
 2. Click **Run workflow**
 3. Select:
    - Test profile (smoke/regression)

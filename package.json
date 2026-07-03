@@ -1,5 +1,5 @@
 {
-  "name": "veradigm-automation-playwright-framework",
+  "name": "automation-playwright-framework",
   "version": "1.0.0",
   "description": "Playwright Automation Framework with Gherkin, Self-Healing Locators, and Smart Reporting",
   "main": "index.js",

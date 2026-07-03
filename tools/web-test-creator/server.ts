@@ -22,7 +22,7 @@ const upload = multer({ dest: uploadsDir });
 
 // GitHub configuration
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'veradigm-project-atlas';
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'project-atlas';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'Testing-Automation-PlayWright';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 

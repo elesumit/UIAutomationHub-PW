@@ -167,7 +167,7 @@ AfterAll(async () => {
       : undefined;
     
     const jiraUrl = process.env.JIRA_TEST_EXECUTION_KEY
-      ? `https://veradigm.atlassian.net/browse/${process.env.JIRA_TEST_EXECUTION_KEY}`
+      ? `https://automationhubpw.atlassian.net/browse/${process.env.JIRA_TEST_EXECUTION_KEY}`
       : undefined;
 
     const { sendSlackCompletionNotification } = await import('../utils/slack');

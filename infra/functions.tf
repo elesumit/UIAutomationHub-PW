@@ -4,7 +4,7 @@
 # FC1 Flex Consumption, Node runtime, SystemAssigned MI, public + Entra-gated.
 # Registered as the primary SWA's linked backend so /api/* is served under the
 # same Entra auth and custom domain — no separate Front Door route. Follows the
-# Veradigm standard in agents.md "Adding a Function App and Storage Account".
+# standard in agents.md "Adding a Function App and Storage Account".
 #
 # Stateless: talks only to GitHub / Jira / Xray. Secrets come from the per-site
 # Key Vault as @Microsoft.KeyVault(...) references (keyvault.tf), never plain.

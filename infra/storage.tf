@@ -10,7 +10,7 @@
 # Standard: public endpoint reachable, but Entra-only — shared keys disabled,
 # auth is the gate (agents.md "public + Entra-only + MI"). Requires
 # storage_use_azuread = true in providers.tf and CloudOps pre-flight items #1/#3
-# in docs/cloudops-preflight-CLPASD-44.md.
+
 # =============================================================================
 
 locals {
