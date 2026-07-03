@@ -107,7 +107,7 @@ variable "github_token" {
 variable "github_owner" {
   description = "GitHub org/owner of the test-automation repo the backend dispatches to"
   type        = string
-  default     = "veradigm-techops"
+  default     = "techops"
 }
 
 variable "github_repo" {
@@ -139,7 +139,7 @@ variable "jira_api_token" {
 variable "jira_base_url" {
   description = "Jira base URL"
   type        = string
-  default     = "https://veradigm.atlassian.net"
+  default     = "https://automationhubpw.atlassian.net"
 }
 
 variable "xray_client_id" {
@@ -167,7 +167,7 @@ variable "function_runtime_version" {
 variable "log_analytics_workspace_id" {
   description = "Resource ID of the central Log Analytics workspace for Application Insights"
   type        = string
-  default     = "/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/ue1neprdresourcegroup/providers/Microsoft.OperationalInsights/workspaces/neon-log-analytics-workspace"
+  default     = "/subscriptions/c4b21de8-bb1c-4efb-b4ec-9431dc344558/resourceGroups/ue1neprdresourcegroup/providers/Microsoft.OperationalInsights/workspaces/neon-log-analytics-workspace"
 }
 
 variable "action_group_id" {

@@ -6,13 +6,13 @@
 
 terraform {
   backend "azurerm" {
-    resource_group_name  = "Ue2NeSwPrdTerraformRG"
-    storage_account_name = "ue2neswprdtfsa"
-    container_name       = "tfstate"
-    key                  = "staticweb/automation-pw.tfstate"
+    resource_group_name  = ""
+    storage_account_name = ""
+    container_name       = ""
+    key                  = ""
     use_oidc             = true
-    tenant_id            = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
-    subscription_id      = "54305029-7d35-40a9-8bf9-950963b449cc"
-    client_id            = "adfdfd01-703d-42cb-8b2b-ebc0a3779a9b"
+    tenant_id            = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
+    subscription_id      = "c4b21de8-bb1c-4efb-b4ec-9431dc344558"
+    client_id            = "c990a453-711f-44d9-9285-8d4caa179d30"
   }
 }

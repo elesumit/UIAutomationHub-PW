@@ -1,8 +1,8 @@
 # az-staticWeb-template
 
-GitHub template repository for the **Veradigm Internal Static Content Hosting Platform** (TSP-269).
+GitHub template repository for the **Internal Static Content Hosting Platform** (TSP-269).
 
-This repo is cloned by the [bootstrap automation](https://github.com/veradigm-techops/az-staticWeb-bootstrap) to create per-site repositories (`az-staticWeb-<siteName>`).
+This repo is cloned by the [bootstrap automation](https://github.com/techops/az-staticWeb-bootstrap) to create per-site repositories (`az-staticWeb-<siteName>`).
 
 ## Repository Structure
 
@@ -34,7 +34,7 @@ This repo is cloned by the [bootstrap automation](https://github.com/veradigm-te
 
 ## Need Backend Services?
 
-This template is for **static-only sites** by default. If your site needs a Function App, Storage Account, or Key Vault, Veradigm has a hardened standard (public + Entra-only + Managed Identity, no VNet) — see [`agents.md` → "Adding a Function App and Storage Account"](agents.md#adding-a-function-app-and-storage-account) for the full Terraform shape and gotchas. Reference implementation: [`veradigm-techops/az-staticWeb-veradigm-campaign-planning-tool/infra/`](https://github.com/veradigm-techops/az-staticWeb-veradigm-campaign-planning-tool/tree/main/infra) — first new site that exercised the standard from scratch.
+This template is for **static-only sites** by default. If your site needs a Function App, Storage Account, or Key Vault, company has a hardened standard (public + Entra-only + Managed Identity, no VNet) — see [`agents.md` → "Adding a Function App and Storage Account"](agents.md#adding-a-function-app-and-storage-account) for the full Terraform shape and gotchas. Reference implementation: [`techops/az-staticWeb-campaign-planning-tool/infra/`](https://github.com/techops/az-staticWeb-campaign-planning-tool/tree/main/infra) — first new site that exercised the standard from scratch.
 
 Three pre-flight items need CloudOps coordination before your first Function App / Storage apply (policy exemption, runner-MI ABAC expansion, data-role pre-grants). Specifics in `agents.md`.
 
@@ -64,7 +64,7 @@ These are configured automatically during provisioning:
 
 ## Architecture
 
-- **Arch Doc:** [TSP-269 Cloud Architecture](https://veradigm.atlassian.net/wiki/spaces/TECH/pages/6497959970)
+- **Arch Doc:** [TSP-269 Cloud Architecture](https://atlassian.net/wiki/spaces/TECH/pages/6497959970)
 - **Platform:** Azure Front Door Premium + Azure Static Web Apps (Standard)
 - **Auth:** Entra ID SSO (all sites require authentication)
 - **Regions:** East US 2 (primary) + Central US (DR) with automatic failover

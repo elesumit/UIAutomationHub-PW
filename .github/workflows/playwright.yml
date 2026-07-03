@@ -1,4 +1,4 @@
-name: 🎭 Veradigm Automation - Playwright Test Executor
+name: 🎭 Automation - Playwright Test Executor
 on:
   workflow_dispatch:
     inputs:
@@ -122,7 +122,7 @@ jobs:
           
       - name: 📋 Display test configuration
         run: |
-          echo "## 🎯 Veradigm Automation - Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Automation - Test Configuration" >> $GITHUB_STEP_SUMMARY
           echo "**Test Profile:** ${{ steps.normalize.outputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ steps.normalize.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Browser:** ${{ steps.normalize.outputs.browser }}" >> $GITHUB_STEP_SUMMARY
@@ -393,7 +393,7 @@ jobs:
               timestamp: new Date().toISOString(),
               status: '${{ job.status }}',
               framework: 'Cucumber + Playwright',
-              project: 'Veradigm Automation'
+              project: 'Automation'
             };
             
             fs.mkdirSync('test-results', { recursive: true });
@@ -460,7 +460,7 @@ jobs:
                 # Add to step summary
                 echo "## 📊 Jira Xray Integration" >> $GITHUB_STEP_SUMMARY
                 echo "- **Test Plan:** ${TEST_PLAN_KEY}" >> $GITHUB_STEP_SUMMARY
-                echo "- **Test Execution:** [$TEST_EXEC_KEY](https://veradigm.atlassian.net/browse/$TEST_EXEC_KEY)" >> $GITHUB_STEP_SUMMARY
+                echo "- **Test Execution:** [$TEST_EXEC_KEY](https://automationhubpw.atlassian.net/browse/$TEST_EXEC_KEY)" >> $GITHUB_STEP_SUMMARY
               else
                 echo "⚠️ Upload succeeded but no Test Execution key returned"
                 echo "test_exec_key=" >> $GITHUB_OUTPUT
@@ -544,7 +544,7 @@ jobs:
           MESSAGE="${MESSAGE}<${REPORT_URL}|View Report>"
           
           if [ -n "${{ steps.xray_upload.outputs.test_exec_key }}" ]; then
-            JIRA_URL="https://veradigm.atlassian.net/browse/${{ steps.xray_upload.outputs.test_exec_key }}"
+            JIRA_URL="https://automationhubpw.atlassian.net/browse/${{ steps.xray_upload.outputs.test_exec_key }}"
             MESSAGE="${MESSAGE} | <${JIRA_URL}|Jira ${{ steps.xray_upload.outputs.test_exec_key }}>"
           fi
           

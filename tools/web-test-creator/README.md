@@ -42,7 +42,7 @@ This installs:
 **Windows (PowerShell):**
 ```powershell
 $env:GITHUB_TOKEN="your_github_token_here"
-$env:GITHUB_OWNER="veradigm-project-atlas"
+$env:GITHUB_OWNER="project-atlas"
 $env:GITHUB_REPO="Testing-Automation-PlayWright"
 $env:GITHUB_BRANCH="main"
 ```
@@ -50,7 +50,7 @@ $env:GITHUB_BRANCH="main"
 **Windows (Command Prompt):**
 ```cmd
 set GITHUB_TOKEN=your_github_token_here
-set GITHUB_OWNER=veradigm-project-atlas
+set GITHUB_OWNER=project-atlas
 set GITHUB_REPO=Testing-Automation-PlayWright
 set GITHUB_BRANCH=main
 ```
@@ -58,7 +58,7 @@ set GITHUB_BRANCH=main
 **Linux/Mac:**
 ```bash
 export GITHUB_TOKEN="your_github_token_here"
-export GITHUB_OWNER="veradigm-project-atlas"
+export GITHUB_OWNER="project-atlas"
 export GITHUB_REPO="Testing-Automation-PlayWright"
 export GITHUB_BRANCH="main"
 ```
@@ -76,7 +76,7 @@ You should see:
 📝 Open in browser: http://localhost:3000
 
 Configuration:
-  - GitHub Repo: veradigm-project-atlas/Testing-Automation-PlayWright
+  - GitHub Repo: project-atlas/Testing-Automation-PlayWright
   - Branch: main
   - Token Configured: ✅ Yes
 ```
@@ -194,7 +194,7 @@ pm2 save
 Create `.env` file in project root:
 ```
 GITHUB_TOKEN=your_github_token_here
-GITHUB_OWNER=veradigm-project-atlas
+GITHUB_OWNER=project-atlas
 GITHUB_REPO=Testing-Automation-PlayWright
 GITHUB_BRANCH=main
 ```
@@ -271,7 +271,7 @@ pm2 logs test-creator
 
 ### View Recent Commits
 Check GitHub repository to see uploaded tests:
-https://github.com/veradigm-project-atlas/Testing-Automation-PlayWright/commits/main
+https://github.com/project-atlas/Testing-Automation-PlayWright/commits/main
 
 ---
 

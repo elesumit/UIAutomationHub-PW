@@ -15,7 +15,7 @@ resource "azurerm_application_insights" "site" {
 }
 
 # ── Standard Availability Test ──
-# Arch doc: "targets https://<siteName>.internal.veradigm.com, 5 Azure regions,
+# Arch doc: "targets https://<siteName>.com, 5 Azure regions,
 # every 5 min, HTTP 200 within 10s timeout"
 resource "azurerm_application_insights_standard_web_test" "site" {
   name                    = "availtest-${var.site_name}"

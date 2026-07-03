@@ -40,7 +40,7 @@ If your organization uses SAML SSO:
 1. Go to: https://github.com/settings/tokens
 2. Find your token: **"Xray Webhook Trigger"**
 3. Click **"Configure SSO"** or **"Enable SSO"**
-4. Find your organization (e.g., `veradigm-project-atlas`)
+4. Find your organization (e.g., `project-atlas`)
 5. Click **"Authorize"**
 6. Confirm authorization
 
@@ -188,7 +188,7 @@ Verify the file is in GitHub:
 
 #### **5.1 Navigate to Automation**
 
-1. Go to Jira: https://veradigm.atlassian.net
+1. Go to Jira: https://automationhubpw.atlassian.net
 2. Navigate to your project (e.g., **BUS Testing CoE**)
 3. Click **Project settings** (bottom left)
 4. Click **Automation** in the left menu
@@ -222,7 +222,7 @@ https://api.github.com/repos/YOUR_ORG/YOUR_REPO/dispatches
 
 **Example:**
 ```
-https://api.github.com/repos/veradigm-project-atlas/Testing-Automation-PlayWright/dispatches
+https://api.github.com/repos/project-atlas/Testing-Automation-PlayWright/dispatches
 ```
 
 **HTTP method:**
@@ -433,7 +433,7 @@ https://api.github.com/repos/ORG/REPO/dispatches
 
 **Example:**
 ```
-https://api.github.com/repos/veradigm-project-atlas/Testing-Automation-PlayWright/dispatches
+https://api.github.com/repos/project-atlas/Testing-Automation-PlayWright/dispatches
 ```
 
 **Fix:**
@@ -477,7 +477,7 @@ https://api.github.com/repos/veradigm-project-atlas/Testing-Automation-PlayWrigh
    - A popup will appear showing organizations
 
 4. **Authorize Organization:**
-   - Find your organization (e.g., `veradigm-project-atlas`)
+   - Find your organization (e.g., `project-atlas`)
    - Click **"Authorize"** button
    - Confirm authorization
 
@@ -854,7 +854,7 @@ If you've tried all troubleshooting steps and still have issues:
 2. **Check Documentation:**
    - GitHub Actions: https://docs.github.com/en/actions
    - Xray API: https://docs.getxray.app/
-   - Jira Automation: https://www.atlassian.com/software/jira/guides/automation
+   - Jira Automation: https://www.automationhubpw.atlassian.com/software/jira/guides/automation
 
 3. **Common Support Channels:**
    - GitHub Community Forum
@@ -1024,7 +1024,7 @@ You'll know the integration is working when:
 
 - **GitHub Actions Documentation:** https://docs.github.com/en/actions
 - **Xray API Documentation:** https://docs.getxray.app/display/XRAY/REST+API
-- **Jira Automation Documentation:** https://www.atlassian.com/software/jira/guides/automation
+- **Jira Automation Documentation:** https://www.automationhubpw.atlassian.com/software/jira/guides/automation
 - **Playwright Documentation:** https://playwright.dev/
 
 ---

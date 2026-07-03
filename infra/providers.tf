@@ -22,8 +22,8 @@ provider "azurerm" {
   features {}
   resource_provider_registrations = "none"
   use_oidc                        = true
-  tenant_id                       = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
-  subscription_id                 = "54305029-7d35-40a9-8bf9-950963b449cc" # Neon - Veradigm Tools
+  tenant_id                       = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
+  subscription_id                 = "c4b21de8-bb1c-4efb-b4ec-9431dc344558" 
   client_id                       = var.mi_client_id
 
   # REQUIRED with shared_access_key_enabled = false on the FC1 runtime storage
@@ -39,19 +39,19 @@ provider "azurerm" {
 # the runner.
 provider "azapi" {
   use_oidc        = true
-  tenant_id       = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
-  subscription_id = "54305029-7d35-40a9-8bf9-950963b449cc"
+  tenant_id       = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
+  subscription_id = "c4b21de8-bb1c-4efb-b4ec-9431dc344558"
   client_id       = var.mi_client_id
 }
 
-# Alias provider — Zirconium subscription (dev/stg SWA instances)
+# Alias provider — subscription (dev/stg SWA instances)
 # Used only when deploying to non-prod environments
 provider "azurerm" {
   alias = "zirconium"
   features {}
   resource_provider_registrations = "none"
   use_oidc                        = true
-  tenant_id                       = "21d8e422-7fd3-4634-8c8a-01dfde9a5502"
-  subscription_id                 = "ffd7017b-28ed-4e90-a2ec-4a6958578f98" # Zirconium - Veradigm Sandbox
+  tenant_id                       = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
+  subscription_id                 = "c4b21de8-bb1c-4efb-b4ec-9431dc344558" # Zirconium - Sandbox
   client_id                       = var.mi_client_id
 }

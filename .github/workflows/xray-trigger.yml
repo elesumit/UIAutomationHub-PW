@@ -182,7 +182,7 @@ jobs:
             TEST_EXECUTION_KEY="${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key || github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}"
             TEST_PROFILE="${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}"
             GITHUB_RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            JIRA_URL="https://veradigm.atlassian.net/browse/${TEST_EXECUTION_KEY}"
+            JIRA_URL="https://automationhubpw.atlassian.net/browse/${TEST_EXECUTION_KEY}"
             
             curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
               -H 'Content-Type: application/json' \
@@ -266,7 +266,7 @@ jobs:
               timestamp: new Date().toISOString(),
               status: '${{ job.status }}',
               framework: 'Cucumber + Playwright',
-              project: 'Veradigm Automation',
+              project: 'Automation',
               triggeredFrom: 'Jira Xray'
             };
             
@@ -326,7 +326,7 @@ jobs:
           # This is a backup notification in case xray-upload script's Slack notification fails
           # The primary notification should come from the xray-upload.ts script
           
-          JIRA_URL="https://veradigm.atlassian.net/browse/${TEST_EXECUTION_KEY}"
+          JIRA_URL="https://atlassian.net/browse/${TEST_EXECUTION_KEY}"
           
           # Only send if xray-upload didn't already send (check for specific conditions)
           echo "ℹ️ Backup Slack notification - primary notification should come from xray-upload script"
@@ -338,7 +338,7 @@ jobs:
           echo "## 🎯 Xray Triggered Test Execution" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Triggered From:** Jira Xray" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test Execution:** [${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }}](https://veradigm.atlassian.net/browse/${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Execution:** [${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }}](https://automationhubpw.atlassian.net/browse/${{ github.event.client_payload.test_execution_key || github.event.inputs.test_execution_key }})" >> $GITHUB_STEP_SUMMARY
           echo "- **Test Plan:** ${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Test Profile:** ${{ github.event.client_payload.test_profile || github.event.inputs.test_profile }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ steps.test_execution.outcome }}" >> $GITHUB_STEP_SUMMARY

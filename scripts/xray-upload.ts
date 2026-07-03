@@ -97,7 +97,7 @@ async function uploadResults(token: string, testPlanKey?: string, projectKey?: s
 }
 
 async function updateTestExecution(executionKey: string) {
-  const jiraUrl = 'https://veradigm.atlassian.net/rest/api/2/issue';
+  const jiraUrl = 'https://automationhubpw.atlassian.net/rest/api/2/issue';
   
   // Get Jira credentials from environment
   const jiraUser = process.env.JIRA_USER;
@@ -143,7 +143,7 @@ async function updateTestExecution(executionKey: string) {
 
   // Add GitHub Actions artifacts links if running in CI
   if (isCI) {
-    const githubRepo = process.env.GITHUB_REPOSITORY || 'veradigm-project-atlas/Testing-Automation-PlayWright';
+    const githubRepo = process.env.GITHUB_REPOSITORY || 'project-atlas/Testing-Automation-PlayWright';
     const githubRunId = process.env.GITHUB_RUN_ID;
     const githubRunNumber = process.env.GITHUB_RUN_NUMBER;
     
@@ -209,7 +209,7 @@ async function updateTestExecution(executionKey: string) {
     console.log('📊 Result:', JSON.stringify(result, null, 2));
     
     if (result.key) {
-      console.log(`\n🔗 Test Execution: https://veradigm.atlassian.net/browse/${result.key}`);
+      console.log(`\n🔗 Test Execution: https://automationhubpw.atlassian.net/browse/${result.key}`);
       
       // Update Test Execution with summary and description
       console.log(`📝 Updating Test Execution ${result.key} with description and artifacts link...`);
@@ -220,7 +220,7 @@ async function updateTestExecution(executionKey: string) {
       if (process.env.ENABLE_SLACK_NOTIFICATIONS === 'true' && process.env.SLACK_WEBHOOK_URL) {
         try {
           const { sendSlack } = await import('../utils/slack');
-          const jiraUrl = `https://veradigm.atlassian.net/browse/${result.key}`;
+          const jiraUrl = `https://automationhubpw.atlassian.net/browse/${result.key}`;
           
           // Parse JUnit XML to get test statistics
           const junitContent = fs.readFileSync(resultsPath, 'utf-8');
@@ -250,7 +250,7 @@ async function updateTestExecution(executionKey: string) {
           
           // Add GitHub Actions link if running in GitHub Actions
           if (process.env.GITHUB_ACTIONS === 'true') {
-            const githubRepo = process.env.GITHUB_REPOSITORY || 'veradigm-project-atlas/Testing-Automation-PlayWright';
+            const githubRepo = process.env.GITHUB_REPOSITORY || 'project-atlas/Testing-Automation-PlayWright';
             const githubRunId = process.env.GITHUB_RUN_ID;
             const githubRunNumber = process.env.GITHUB_RUN_NUMBER;
             
