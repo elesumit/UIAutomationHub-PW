@@ -6,10 +6,10 @@
 
 terraform {
   backend "azurerm" {
-    resource_group_name  = ""
-    storage_account_name = ""
-    container_name       = ""
-    key                  = ""
+    resource_group_name  = "my-automation-rg"
+    storage_account_name = "myautomationtfstate"
+    container_name       = "tfstate"
+    key                  = "automation-pw.tfstate"
     use_oidc             = true
     tenant_id            = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
     subscription_id      = "c4b21de8-bb1c-4efb-b4ec-9431dc344558"

@@ -24,14 +24,6 @@
       "redirect": "/.auth/login/aad"
     }
   },
-  "forwardingGateway": {
-    "requiredHeaders": {
-      "X-Azure-FDID": "0daf6110-cc24-4e96-8a28-e32f33e92ab1"
-    },
-    "allowedForwardedHosts": [
-      "automation-pw.internal.veradigm.com"
-    ]
-  },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

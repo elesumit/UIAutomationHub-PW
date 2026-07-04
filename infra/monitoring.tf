@@ -1,14 +1,29 @@
 # =============================================================================
 # Monitoring — Application Insights + Availability Tests + Alerts
 # Arch doc: "Application Insights (appi-<siteName>-prd, workspace-based)"
+#
+# NOTE: the original template pointed at a shared "Neon" platform Log Analytics
+# workspace (ue1neprdresourcegroup) that doesn't exist in this subscription —
+# same stale-template pattern as the AAD app / Front Door / bootstrap repo
+# found earlier. This site provisions its own dedicated workspace instead.
 # =============================================================================
+
+resource "azurerm_log_analytics_workspace" "site" {
+  name                = "law-${var.site_name}-prd"
+  resource_group_name = data.azurerm_resource_group.swa.name
+  location            = var.regions.primary
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
+  tags = var.tags
+}
 
 # ── Application Insights — workspace-based ──
 resource "azurerm_application_insights" "site" {
   name                = "appi-${var.site_name}-prd"
   resource_group_name = data.azurerm_resource_group.swa.name
   location            = var.regions.primary
-  workspace_id        = var.log_analytics_workspace_id
+  workspace_id        = azurerm_log_analytics_workspace.site.id
   application_type    = "web"
 
   tags = var.tags
@@ -29,7 +44,7 @@ resource "azurerm_application_insights_standard_web_test" "site" {
   geo_locations = var.availability_test_locations
 
   request {
-    url = "https://${var.custom_domain}"
+    url = "https://${azurerm_static_web_app.primary.default_host_name}"
 
     header {
       name  = "Accept"

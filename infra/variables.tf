@@ -34,29 +34,6 @@ variable "resource_group" {
   type        = string
 }
 
-variable "frontdoor_resource_group" {
-  description = "Resource group containing the shared Front Door profile (Neon subscription)"
-  type        = string
-}
-
-variable "frontdoor_profile_name" {
-  description = "Name of the shared Front Door Premium profile (Neon subscription)"
-  type        = string
-}
-
-
-variable "dns_zone_name" {
-  description = "Azure DNS zone for custom domains"
-  type        = string
-  default     = "internal.veradigm.com"
-}
-
-variable "dns_zone_resource_group" {
-  description = "Resource group containing the DNS zone"
-  type        = string
-  default     = "Ue1NePrdPublicDNS-RG"
-}
-
 variable "swa_name_primary" {
   description = "SWA instance name for primary region (e.g., swa-sbom-ue2)"
   type        = string
@@ -163,12 +140,6 @@ variable "function_runtime_version" {
 }
 
 # ── Optional overrides ──
-
-variable "log_analytics_workspace_id" {
-  description = "Resource ID of the central Log Analytics workspace for Application Insights"
-  type        = string
-  default     = "/subscriptions/c4b21de8-bb1c-4efb-b4ec-9431dc344558/resourceGroups/ue1neprdresourcegroup/providers/Microsoft.OperationalInsights/workspaces/neon-log-analytics-workspace"
-}
 
 variable "action_group_id" {
   description = "Resource ID of the shared Action Group for alert routing"

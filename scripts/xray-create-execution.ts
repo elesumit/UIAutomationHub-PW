@@ -6,7 +6,7 @@ dotenv.config();
 const jiraUrl = process.env.JIRA_HOST || '';
 const jiraUser = process.env.JIRA_USER || '';
 const jiraApiToken = process.env.JIRA_API_TOKEN || '';
-const projectKey = 'BTC';
+const projectKey = process.env.XRAY_PROJECT_KEY || 'BTC';
 
 export async function createTestExecution(summary?: string, description?: string, testPlanKey?: string): Promise<string> {
   if (!jiraUrl || !jiraUser || !jiraApiToken) {
