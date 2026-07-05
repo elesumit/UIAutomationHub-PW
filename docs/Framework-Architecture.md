@@ -1,4 +1,4 @@
-# Veradigm Test Automation Framework - Architecture
+# ScriptlessIQ Test Automation Framework - Architecture
 
 ## 🏗️ Framework Architecture Overview
 

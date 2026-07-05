@@ -12,7 +12,7 @@ XSP-135,Create Case and Validate in Salesforce,"@smoke, @regression",Navigate,CE
 ,,,Enter,Search for help,Portal
 ,,,Wait,3,
 ,,,Click,Create a Case,
-,,,Select,Select a Product,Veradigm Fiscal Management and Supply Chain Solutions
+,,,Select,Select a Product,ScriptlessIQ Fiscal Management and Supply Chain Solutions
 ,,,Select,Select an Account,Sumit Gupta Pediatrics
 ,,,Select,Impact,Partial loss of service
 ,,,Enter,Subject,Test12 Portal access is not working

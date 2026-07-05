@@ -3,7 +3,7 @@
 Backend for the Automation Hub site (`site/generator.html`, `site/execution.html`).
 Azure **Functions v4** (Node 20), deployed to the **FC1 Flex Consumption** Function App
 provisioned in `infra/functions.tf` and registered as the primary SWA's linked backend, so
-these routes are served at `https://automation-pw.internal.veradigm.com/api/*` under the
+these routes are served at `https://your-app.example.com/api/*` under the
 site's Entra auth.
 
 **Stateless** — talks only to GitHub Models, GitHub REST, Jira, and Xray. Nothing is
