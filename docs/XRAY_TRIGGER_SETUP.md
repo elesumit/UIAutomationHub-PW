@@ -106,7 +106,7 @@ https://api.github.com/repos/Automation-PW/dispatches
 
 ### Method 1: From Xray Test Plan
 
-1. Open a Test Plan in Jira (e.g., BTC-104)
+1. Open a Test Plan in Jira (e.g., XSP-58)
 2. Click **Execute** or create a new Test Execution
 3. The webhook automatically triggers GitHub Actions
 4. Tests run in GitHub Actions
@@ -125,7 +125,7 @@ curl -X POST \
   -d '{
     "event_type": "xray-trigger",
     "client_payload": {
-      "test_plan_key": "BTC-104",
+      "test_plan_key": "XSP-58",
       "test_profile": "smoke"
     }
   }'
@@ -139,7 +139,7 @@ The Xray trigger workflow accepts these parameters via `client_payload`:
 
 | Parameter | Description | Default | Options |
 |-----------|-------------|---------|---------|
-| `test_plan_key` | Xray Test Plan Key | Required | BTC-104, BTC-105, etc. |
+| `test_plan_key` | Xray Test Plan Key | Required | XSP-58, XSP-105, etc. |
 | `test_profile` | Test suite to run | `smoke` | `smoke`, `regression` |
 
 **Example payloads:**
@@ -149,7 +149,7 @@ The Xray trigger workflow accepts these parameters via `client_payload`:
 {
   "event_type": "xray-trigger",
   "client_payload": {
-    "test_plan_key": "BTC-104",
+    "test_plan_key": "XSP-58",
     "test_profile": "smoke"
   }
 }
@@ -160,7 +160,7 @@ The Xray trigger workflow accepts these parameters via `client_payload`:
 {
   "event_type": "xray-trigger",
   "client_payload": {
-    "test_plan_key": "BTC-104",
+    "test_plan_key": "XSP-58",
     "test_profile": "regression"
   }
 }
@@ -229,12 +229,12 @@ Ensure these secrets are configured in GitHub repository settings:
 
 1. User Action in Xray
    └─> Create/Update Test Execution in Jira
-        └─> Test Plan: BTC-104
+        └─> Test Plan: XSP-58
 
 2. Xray Webhook Triggered
    └─> POST to GitHub API
         └─> Event: xray-trigger
-        └─> Payload: { test_plan_key: "BTC-104", test_profile: "smoke" }
+        └─> Payload: { test_plan_key: "XSP-58", test_profile: "smoke" }
 
 3. GitHub Actions Triggered
    └─> Workflow: xray-trigger.yml
@@ -252,7 +252,7 @@ Ensure these secrets are configured in GitHub repository settings:
    └─> Authenticate with Xray API
    └─> Upload JUnit XML
    └─> Update Test Execution summary/description
-   └─> Link to Test Plan: BTC-104
+   └─> Link to Test Plan: XSP-58
 
 6. Notifications
    └─> Slack notification (if enabled)
@@ -285,7 +285,7 @@ curl -X POST \
   https://api.github.com/repos/YOUR_ORG/YOUR_REPO/dispatches \
   -H "Authorization: Bearer YOUR_GITHUB_PAT" \
   -H "Content-Type: application/json" \
-  -d '{"event_type":"xray-trigger","client_payload":{"test_plan_key":"BTC-104","test_profile":"smoke"}}'
+  -d '{"event_type":"xray-trigger","client_payload":{"test_plan_key":"XSP-58","test_profile":"smoke"}}'
 ```
 
 ### Tests run but results don't upload to Xray
@@ -308,7 +308,7 @@ curl -X POST \
 ## 📝 Best Practices
 
 1. **Use Test Plans:** Always link Test Executions to Test Plans for better traceability
-2. **Naming Convention:** Use consistent Test Plan keys (e.g., BTC-104 for Smoke, BTC-105 for Regression)
+2. **Naming Convention:** Use consistent Test Plan keys (e.g., XSP-58 for Smoke, XSP-105 for Regression)
 3. **Monitor Runs:** Check GitHub Actions regularly for failed runs
 4. **Rotate Tokens:** Update GitHub PAT before expiration
 5. **Review Results:** Always review Xray Test Executions after automated runs
@@ -327,7 +327,7 @@ You can also manually trigger tests from GitHub Actions UI:
    - Environment (QA/UAT)
    - Browser
    - Other options
-4. Enter Test Plan Key (e.g., BTC-104)
+4. Enter Test Plan Key (e.g., XSP-58)
 5. Click **Run workflow**
 
 ---

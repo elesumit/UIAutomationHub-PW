@@ -123,16 +123,16 @@ http://localhost:3002/execution.html
 
 **Verify:**
 - ✅ Selected count badge shows correct number (e.g., "2 tests selected")
-- ✅ Console log shows: `Selected test keys: ['BTC-135', 'BTC-279']`
+- ✅ Console log shows: `Selected test keys: ['XSP-135', 'XSP-279']`
 - ✅ Execution starts with correct test keys
-- ✅ Status shows: "Selected tests: BTC-135, BTC-279"
+- ✅ Status shows: "Selected tests: XSP-135, XSP-279"
 
 ---
 
 ### Test 3: Xray Upload (Local Simulation)
 ```bash
 # Set environment variables
-$env:XRAY_TEST_EXECUTION_KEY="BTC-284"
+$env:XRAY_TEST_EXECUTION_KEY="XSP-284"
 $env:ENABLE_SLACK_NOTIFICATIONS="true"
 
 # Run xray upload
@@ -142,7 +142,7 @@ npm run xray:upload
 **Expected Output:**
 ```
 🚀 Starting Xray upload...
-📋 Updating Test Execution: BTC-284
+📋 Updating Test Execution: XSP-58
 ✅ Authenticated with Xray API
 ✅ Test results uploaded successfully!
 ✅ Slack notification sent with test results and links

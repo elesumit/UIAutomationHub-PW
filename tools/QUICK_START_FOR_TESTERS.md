@@ -16,7 +16,7 @@ Open this file in Excel: `tools/test-case-template-simple.csv`
 
 | Column | What to Put | Example |
 |--------|-------------|---------|
-| **A: Test Case ID** | Your Jira ticket number | BTC-201 |
+| **A: Test Case ID** | Your Jira ticket number | XSP-201 |
 | **B: Scenario Name** | What the test does | Create Case |
 | **C: Tags** | Test categories | @smoke, @regression |
 | **D: Action** | What to do (see below) | Click |
@@ -64,7 +64,7 @@ Done! Your test is ready to run.
 
 ```csv
 Test Case ID,Scenario Name,Tags,Action,What to Click/Enter,Value
-BTC-100,Login to Portal,@smoke,Open,CE Portal,
+XSP-100,Login to Portal,@smoke,Open,CE Portal,
 ,,,Click,Log in button,
 ,,,Type,Username field,admin@test.com
 ,,,Type,Password field,MyPassword123
@@ -76,7 +76,7 @@ BTC-100,Login to Portal,@smoke,Open,CE Portal,
 
 ```csv
 Test Case ID,Scenario Name,Tags,Action,What to Click/Enter,Value
-BTC-101,Create Support Case,@regression,Open,CE Portal,
+XSP-101,Create Support Case,@regression,Open,CE Portal,
 ,,,Click,Log in button,
 ,,,Type,Username field,
 ,,,Click,Continue button,
@@ -95,7 +95,7 @@ BTC-101,Create Support Case,@regression,Open,CE Portal,
 
 ```csv
 Test Case ID,Scenario Name,Tags,Action,What to Click/Enter,Value
-BTC-102,Search for Case,@smoke,Open,Salesforce,
+XSP-102,Search for Case,@smoke,Open,Salesforce,
 ,,,Click,Search box,
 ,,,Type,Search field,Use remembered myCase
 ,,,Click,Search button,
@@ -135,15 +135,15 @@ BTC-102,Search for Case,@smoke,Open,Salesforce,
 
 ### ❌ DON'T: Fill Test Case ID on every row
 ```csv
-BTC-100,Login Test,@smoke,Open,CE Portal,
-BTC-100,Login Test,@smoke,Click,Log in,
-BTC-100,Login Test,@smoke,Type,Username,admin
+XSP-100,Login Test,@smoke,Open,CE Portal,
+XSP-100,Login Test,@smoke,Click,Log in,
+XSP-100,Login Test,@smoke,Type,Username,admin
 ```
 **Why:** Only the first row needs it.
 
 ### ✅ DO: Leave it blank after the first row
 ```csv
-BTC-100,Login Test,@smoke,Open,CE Portal,
+XSP-100,Login Test,@smoke,Open,CE Portal,
 ,,,Click,Log in button,
 ,,,Type,Username field,admin
 ```

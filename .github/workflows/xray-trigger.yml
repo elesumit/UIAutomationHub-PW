@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       test_execution_key:
-        description: 'Jira Test Execution Key (e.g., BTC-123)'
+        description: 'Jira Test Execution Key (e.g., XSP-123)'
         required: true
         type: string
       test_plan_key:

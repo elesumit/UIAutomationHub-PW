@@ -106,15 +106,15 @@
 │  │  Xray Import                                                   │    │
 │  ├────────────────────────────────────────────────────────────────┤    │
 │  │  • Parse JUnit XML                                             │    │
-│  │  • Map Test Cases to Jira Issues (@BTC-XX tags)               │    │
+│  │  • Map Test Cases to Jira Issues (@XSP-XX tags)               │    │
 │  │  • Create Test Execution                                       │    │
 │  │  • Update Test Results (Pass/Fail)                            │    │
 │  │  • Attach Screenshots & Logs                                   │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                                                                          │
 │  Jira Updated:                                                          │
-│    ✓ BTC-80: PASSED ✅                                                 │
-│    ✓ BTC-85: PASSED ✅                                                 │
+│    ✓ XSP-80: PASSED ✅                                                 │
+│    ✓ XSP-85: PASSED ✅                                                 │
 │    ✓ Test Execution: TE-456 created                                    │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ▼
@@ -135,7 +135,7 @@
 │    🔗 Jira Test Execution (TE-456)                                      │
 │                                                                          │
 │  Failed Tests:                                                           │
-│    ❌ BTC-82: Login with invalid credentials                            │
+│    ❌ XSP-82: Login with invalid credentials                            │
 │       Screenshot: 📸 attached                                           │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ▼

@@ -1,5 +1,5 @@
 Test Case ID,Scenario Name,Tags,Action,Element Name,Value (if entering text)
-BTC-135,Create Case and Validate in Salesforce,"@smoke, @regression",Open,CE Portal,
+XSP-135,Create Case and Validate in Salesforce,"@smoke, @regression",Open,CE Portal,
 ,,,Click,Log in button,
 ,,,Type,Username field,
 ,,,Click,Continue button,

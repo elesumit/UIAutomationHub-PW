@@ -18,11 +18,11 @@ runtime account.
 | `/api/generate` | POST | Generate Gherkin via GitHub Models (gpt-4o) |
 | `/api/save-to-github` | POST | Commit a feature file to the framework repo |
 | `/api/save-to-local` | POST | Alias of save-to-github (no local FS in the cloud) |
-| `/api/fetch-test-cases` | GET | List tests in Xray Test Plan BTC-104 |
-| `/api/jira-issue-types` | GET | BTC project issue types |
+| `/api/fetch-test-cases` | GET | List tests in Xray Test Plan XSP-58 |
+| `/api/jira-issue-types` | GET | XSP project issue types |
 | `/api/jira/story/{storyId}` | GET | Fetch a Jira story + parsed acceptance criteria |
-| `/api/upload-to-jira-github` | POST | Import feature to Xray, link to BTC-104, commit to GitHub |
-| `/api/create-test-execution` | POST | Create an Xray Test Execution, link to BTC-104 |
+| `/api/upload-to-jira-github` | POST | Import feature to Xray, link to XSP-58, commit to GitHub |
+| `/api/create-test-execution` | POST | Create an Xray Test Execution, link to XSP-58 |
 | `/api/execute-test` | POST | Dispatch the `xray-trigger` workflow in the test repo |
 | `/api/check-workflow-status` | GET | Poll a GitHub Actions run status |
 | `/api/get-test-report` | GET | Stream the cucumber HTML report from run artifacts |

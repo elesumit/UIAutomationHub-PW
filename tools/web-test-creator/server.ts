@@ -121,7 +121,7 @@ app.post('/api/save-to-github', async (req, res) => {
     console.log(`💾 Saving feature file to GitHub`);
 
     // Extract test case IDs and scenario names from feature content
-    const testCaseIdMatch = featureContent.match(/@(BTC-\d+)/);
+    const testCaseIdMatch = featureContent.match(/@(XSP-\d+)/);
     const scenarioMatch = featureContent.match(/Scenario:\s*(.+)/);
     
     if (!testCaseIdMatch || !scenarioMatch) {

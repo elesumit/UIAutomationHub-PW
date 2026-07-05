@@ -37,7 +37,7 @@ npm install xlsx express
 | Column A | Column B | Column C | Column D | Column E | Column F |
 |----------|----------|----------|----------|----------|----------|
 | Test Case ID | Scenario Name | Tags | Action | Element | Value |
-| BTC-135 | Create Case | @smoke, @regression | Click | Log in | |
+| XSP-135 | Create Case | @smoke, @regression | Click | Log in | |
 | | | | Enter | CE_UserName | admin |
 | | | | Click | Continue | |
 
@@ -88,7 +88,7 @@ npm run test:smoke
 
 **Excel Input:**
 ```
-Test Case ID: BTC-135
+Test Case ID: XSP-135
 Scenario Name: Login to CE Portal
 Tags: @smoke
 Action: Navigate, Element: CE Portal
@@ -99,10 +99,10 @@ Action: Click, Element: Continue
 
 **Generated Gherkin:**
 ```gherkin
-@BTC-135
+@XSP-135
 Feature: Login to CE Portal
 
-  @BTC-135 @smoke
+  @XSP-135 @smoke
   Scenario: Login to CE Portal
     Given I navigate to CE Portal ""
     When I click on "Log in"
@@ -139,7 +139,7 @@ Navigate to: http://localhost:3000
 **Step 3: Record your test**
 
 1. Fill in test information:
-   - Test Case ID (e.g., BTC-135)
+   - Test Case ID (e.g., XSP-135)
    - Scenario Name
    - Starting URL
    - Tags (@smoke, @regression, etc.)

@@ -84,7 +84,7 @@ module.exports = {
     parallel: 1,
     timeout: 60000
   },
-  // Runs BTC-340 and BTC-341 — preprocess excel features first with: npm run preprocess:features
+  // Runs XSP-340 and XSP-341 — preprocess excel features first with: npm run preprocess:features
   btc: {
     require: ['steps/**/*.ts', 'utils/world.ts'],
     requireModule: ['ts-node/register'],
@@ -98,7 +98,7 @@ module.exports = {
       snippetInterface: 'async-await'
     },
     paths: ['.features-generated/**/*.feature'],
-    tags: '@BTC-340 or @BTC-341 or @BTC-370 or @BTC-371',
+    tags: '@XSP-340 or @XSP-341 or @XSP-370 or @XSP-371',
     parallel: 1,
     timeout: 120000
   },

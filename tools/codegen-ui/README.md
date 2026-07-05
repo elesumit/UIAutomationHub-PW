@@ -10,7 +10,7 @@ npx ts-node tools/codegen-ui/server.ts
 Open browser: http://localhost:3000
 
 ### Step 2: Fill in Test Details
-- **Test Case ID:** BTC-201
+- **Test Case ID:** XSP-201
 - **Scenario Name:** Create Case
 - **Starting URL:** https://qa.customerexperience.veradigm.com
 - **Tags:** @smoke, @regression

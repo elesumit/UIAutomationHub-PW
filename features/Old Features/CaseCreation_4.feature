@@ -3,7 +3,7 @@ Feature: Create Case in CE Portal and verify in Salesforce
   As a user
   I want to create a case in the CE Portal So that I can verify it in Salesforce
 
-  @BTC-81
+  @XSP-81
   Scenario: Create Case and Validate in Salesforce
 
  #Login to SF and verify the case

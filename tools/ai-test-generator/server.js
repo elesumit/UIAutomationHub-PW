@@ -146,7 +146,7 @@ ${examples.length > 0 ? examples[0] : 'No examples available'}
    - Use @JIRA_PLACEHOLDER_1 for first scenario
    - Use @JIRA_PLACEHOLDER_2 for second scenario
    - Use @JIRA_PLACEHOLDER_3 for third scenario, etc.
-   - These will be replaced with actual Jira keys (e.g., @BTC-101, @BTC-102)
+   - These will be replaced with actual Jira keys (e.g., @XSP-101, @XSP-102)
    - Each scenario MUST have its own unique placeholder tag
 
 **Tag Format Example:**
@@ -353,7 +353,7 @@ app.post('/api/save-to-local', async (req, res) => {
 });
 
 /**
- * Fetch existing test cases from Jira project BTC linked to test plan BTC-104
+ * Fetch existing test cases from Jira project XSP linked to test plan XSP-58
  */
 app.get('/api/fetch-test-cases', async (req, res) => {
   try {
@@ -383,12 +383,12 @@ app.get('/api/fetch-test-cases', async (req, res) => {
     const xrayToken = await authResponse.text();
     const token = xrayToken.replace(/"/g, '');
     
-    console.log('📋 Fetching test cases from Test Plan BTC-104...');
+    console.log('📋 Fetching test cases from Test Plan XSP-58...');
     
     // Fetch tests from Test Plan using GraphQL
     const graphqlQuery = {
       query: `{
-        getTestPlans(jql: "key = BTC-104", limit: 1) {
+        getTestPlans(jql: "key = XSP-58", limit: 1) {
           results {
             issueId
             jira(fields: ["key", "summary"])
@@ -429,7 +429,7 @@ app.get('/api/fetch-test-cases', async (req, res) => {
       summary: test.jira.summary
     }));
     
-    console.log(`✅ Found ${testCases.length} test cases in BTC-104`);
+    console.log(`✅ Found ${testCases.length} test cases in XSP-58`);
     
     res.json({ testCases });
     
@@ -443,7 +443,7 @@ app.get('/api/fetch-test-cases', async (req, res) => {
 });
 
 /**
- * Get available issue types for BTC project
+ * Get available issue types for XSP project
  */
 app.get('/api/jira-issue-types', async (req, res) => {
   try {
@@ -457,7 +457,7 @@ app.get('/api/jira-issue-types', async (req, res) => {
     const jiraAuth = Buffer.from(`${JIRA_USER}:${JIRA_API_TOKEN}`).toString('base64');
     
     const response = await axios.get(
-      'https://automationhubpw.atlassian.net/rest/api/3/project/BTC',
+      'https://automationhubpw.atlassian.net/rest/api/3/project/XSP',
       {
         headers: {
           'Authorization': `Basic ${jiraAuth}`,
@@ -720,7 +720,7 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
     
     // Use axios for multipart upload
     const importResponse = await axios.post(
-      'https://xray.cloud.getxray.app/api/v2/import/feature?projectKey=BTC',
+      'https://xray.cloud.getxray.app/api/v2/import/feature?projectKey=XSP',
       formData,
       {
         headers: {
@@ -791,18 +791,18 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
     
     console.log(`✅ Saved to features/${filename} with Jira key ${mainTestKey}`);
     
-    // Link ONLY Tests (not Preconditions) to Test Plan BTC-104
+    // Link ONLY Tests (not Preconditions) to Test Plan XSP-58
     if (testIds.length > 0) {
-      console.log(`🔗 Linking ${testIds.length} test(s) to Test Plan BTC-104...`);
+      console.log(`🔗 Linking ${testIds.length} test(s) to Test Plan XSP-58...`);
       
       try {
-        // First, get the numeric ID for BTC-104 using Jira REST API
+        // First, get the numeric ID for XSP-58 using Jira REST API
         const JIRA_USER = process.env.JIRA_USER;
         const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
         const jiraAuth = Buffer.from(`${JIRA_USER}:${JIRA_API_TOKEN}`).toString('base64');
         
         const issueResponse = await axios.get(
-          'https://automationhubpw.atlassian.net/rest/api/3/issue/BTC-104',
+          'https://automationhubpw.atlassian.net/rest/api/3/issue/XSP-58',
           {
             headers: {
               'Authorization': `Basic ${jiraAuth}`,
@@ -812,7 +812,7 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
         );
         
         const testPlanId = issueResponse.data.id;
-        console.log(`📋 BTC-104 numeric ID: ${testPlanId}`);
+        console.log(`📋 XSP-58 numeric ID: ${testPlanId}`);
         
         // Use GraphQL mutation with ONLY test IDs (not preconditions)
         const linkResponse = await fetch(`https://xray.cloud.getxray.app/api/v2/graphql`, {
@@ -840,15 +840,15 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
         console.log(`📥 Link response:`, JSON.stringify(linkResult));
         
         if (linkResponse.ok && linkResult.data?.addTestsToTestPlan) {
-          console.log(`✅ Linked ${testIds.length} test(s) to Test Plan BTC-104: ${testKeys.join(', ')}`);
+          console.log(`✅ Linked ${testIds.length} test(s) to Test Plan XSP-58: ${testKeys.join(', ')}`);
         } else {
-          console.log(`⚠️ Failed to link to BTC-104: ${JSON.stringify(linkResult)}`);
+          console.log(`⚠️ Failed to link to XSP-58: ${JSON.stringify(linkResult)}`);
         }
       } catch (linkError) {
-        console.log(`⚠️ Linking to BTC-104 failed: ${linkError.message}`);
+        console.log(`⚠️ Linking to XSP-58 failed: ${linkError.message}`);
       }
     } else {
-      console.log(`⚠️ No tests to link to BTC-104`);
+      console.log(`⚠️ No tests to link to XSP-58`);
     }
     
     // Upload to GitHub
@@ -899,7 +899,7 @@ app.post('/api/upload-to-jira-github', async (req, res) => {
       summary: featureSummary,
       jiraUrl: `https://automationhubpw.atlassian.net/browse/${mainTestKey}`,
       githubUrl: `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/main/features/${filename}`,
-      message: `Test Case(s) created: ${allTestKeys.join(', ')} - All linked to BTC-104`
+      message: `Test Case(s) created: ${allTestKeys.join(', ')} - All linked to XSP-58`
     });
     
   } catch (error) {
@@ -993,7 +993,7 @@ app.post('/api/create-test-execution', async (req, res) => {
       testIssueIds: testIssueIds.map(String),
       jira: {
         fields: {
-          project: { key: 'BTC' },
+          project: { key: 'XSP' },
           summary: summary || `Test Execution - ${new Date().toLocaleString()}`,
           issuetype: { name: 'Test Execution' }
         }
@@ -1035,13 +1035,13 @@ app.post('/api/create-test-execution', async (req, res) => {
     
     console.log(`✅ Test Execution created: ${testExecutionKey} (ID: ${testExecutionId})`);
     
-    // Link Test Execution to Test Plan BTC-104
-    console.log(`🔗 Linking Test Execution to Test Plan BTC-104...`);
+    // Link Test Execution to Test Plan XSP-58
+    console.log(`🔗 Linking Test Execution to Test Plan XSP-58...`);
     
     try {
-      // Get BTC-104 numeric ID
+      // Get XSP-58 numeric ID
       const testPlanResponse = await axios.get(
-        'https://automationhubpw.atlassian.net/rest/api/3/issue/BTC-104',
+        'https://automationhubpw.atlassian.net/rest/api/3/issue/XSP-58',
         {
           headers: {
             'Authorization': `Basic ${jiraAuth}`,
@@ -1051,7 +1051,7 @@ app.post('/api/create-test-execution', async (req, res) => {
       );
       
       const testPlanId = testPlanResponse.data.id;
-      console.log(`📋 BTC-104 numeric ID: ${testPlanId}`);
+      console.log(`📋 XSP-58 numeric ID: ${testPlanId}`);
       
       const linkMutation = `
         mutation AddExecToPlan($issueId: String!, $testExecIssueIds: [String]!) {
@@ -1086,10 +1086,10 @@ app.post('/api/create-test-execution', async (req, res) => {
       if (linkResult.errors?.length) {
         console.warn(`⚠️ Failed to link Test Execution to Test Plan: ${JSON.stringify(linkResult.errors)}`);
       } else {
-        console.log(`✅ Linked Test Execution to Test Plan BTC-104`);
+        console.log(`✅ Linked Test Execution to Test Plan XSP-58`);
       }
     } catch (linkError) {
-      console.warn(`⚠️ Failed to link to BTC-104: ${linkError.message}`);
+      console.warn(`⚠️ Failed to link to XSP-58: ${linkError.message}`);
     }
     
     res.json({
@@ -1111,7 +1111,7 @@ app.post('/api/create-test-execution', async (req, res) => {
       error: 'Failed to create Test Execution',
       details: error.message,
       suggestion: isTestNotFoundError 
-        ? 'The test keys (BTC-XXX) in your feature file do not exist in Jira. Please create them in Jira first, or remove the @BTC-XXX tags and use local execution only.'
+        ? 'The test keys (XSP-XXX) in your feature file do not exist in Jira. Please create them in Jira first, or remove the @XSP-XXX tags and use local execution only.'
         : 'Check Xray credentials and API access.'
     });
   }
@@ -1140,7 +1140,7 @@ app.post('/api/execute-test', async (req, res) => {
       event_type: 'xray-trigger',
       client_payload: {
         test_execution_key: testExecutionKey,
-        test_plan_key: 'BTC-104',
+        test_plan_key: 'XSP-58',
         test_profile: testProfile || 'smoke'
       }
     });

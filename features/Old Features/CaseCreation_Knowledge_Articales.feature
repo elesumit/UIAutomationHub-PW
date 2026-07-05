@@ -14,7 +14,7 @@ Feature: Create Cases with Different Product and Impact Combinations
     When I click on "Continue"
     When I wait for 3 seconds
 
-  @BTC-84
+  @XSP-84
   Scenario Outline: Create case with <Product> and <Impact>
     # Create Case
     When I click on "Support"

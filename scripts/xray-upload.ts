@@ -11,7 +11,7 @@ const resultsPath = path.resolve(__dirname, '../test-results/junit-report.xml');
 const cucumberReportPath = path.resolve(__dirname, '../test-results/cucumber-report.json');
 
 // Use Cucumber JSON format when --cucumber flag is passed or XRAY_USE_CUCUMBER=true.
-// Cucumber format matches tests by @tag (e.g. @BTC-340) — prevents Xray from creating
+// Cucumber format matches tests by @tag (e.g. @XSP-340) — prevents Xray from creating
 // duplicate test cases when scenario outline names don't match existing ticket summaries.
 const useCucumber = process.argv.includes('--cucumber') || process.env.XRAY_USE_CUCUMBER === 'true';
 
@@ -71,7 +71,7 @@ async function uploadResults(token: string, testPlanKey?: string, projectKey?: s
   if (projectKey) params.push(`projectKey=${projectKey}`);
 
   if (useCucumber) {
-    // Cucumber JSON — Xray matches tests by @tag (e.g. @BTC-340), no duplicates created
+    // Cucumber JSON — Xray matches tests by @tag (e.g. @XSP-340), no duplicates created
     if (!fs.existsSync(cucumberReportPath)) {
       throw new Error(`Cucumber report not found at ${cucumberReportPath}`);
     }
@@ -185,8 +185,8 @@ async function updateTestExecution(executionKey: string) {
     // Get Test Execution Key (for updating existing execution) or Test Plan Key (for creating new)
     const testExecutionKey = process.env.XRAY_TEST_EXECUTION_KEY;
     const testPlanKey = process.env.XRAY_TEST_PLAN_KEY || process.argv[2];
-    // Get Project Key from environment variable (defaults to BTC)
-    const projectKey = process.env.XRAY_PROJECT_KEY || 'BTC';
+    // Get Project Key from environment variable (defaults to XSP)
+    const projectKey = process.env.XRAY_PROJECT_KEY || 'XSP';
     
     if (testExecutionKey) {
       console.log(`📋 Updating Test Execution: ${testExecutionKey}`);

@@ -4,7 +4,7 @@ Feature: Verify Patient Safety checkbox visibility, mandatory validations and su
   I want additional Patient Safety-related fields to appear and be validated when "Is this a Patient Safety case?" is selected
   So that I can capture complete and accurate patient safety information during case creation
 
-  @JIRA_PLACEHOLDER_1 @PatientSafety1 @BTC-371
+  @JIRA_PLACEHOLDER_1 @PatientSafety1 @XSP-371
   Scenario Outline: Verify Patient Safety checkbox visibility, mandatory validations and successful submission
     Given I navigate to CE Portal ""
     When I click on "Log in"

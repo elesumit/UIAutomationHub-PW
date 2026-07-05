@@ -12,7 +12,7 @@
 ├─────────────────────────────────────────────────────────────────────────┤
 │  • Gherkin Feature Files (.feature)                                     │
 │  • Scenario Outlines with Data Tables                                   │
-│  • Tags: @smoke, @regression, @BTC-XX                                   │
+│  • Tags: @smoke, @regression, @XSP-XX                                   │
 │  • Business-Readable Test Cases                                         │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ↓

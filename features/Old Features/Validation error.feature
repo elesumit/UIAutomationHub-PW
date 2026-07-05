@@ -19,7 +19,7 @@ Feature: Validate error banner for missing required fields in CE Portal case cre
     When I wait for 3 seconds
     When I click on "Create a Case"
 
-  @BTC-101
+  @XSP-101
   Scenario: Submit case without selecting a product
     When I select "Test Account" from "Select an Account"
     When I select "High" from "Impact"
@@ -29,7 +29,7 @@ Feature: Validate error banner for missing required fields in CE Portal case cre
     Then I should see "Missing Required Fields"
     Then I see "Select a Product" as "required"
 
-  @BTC-102
+  @XSP-102
   Scenario: Submit case without selecting an account
     When I select "Test Product" from "Select a Product"
     When I select "High" from "Impact"
@@ -39,7 +39,7 @@ Feature: Validate error banner for missing required fields in CE Portal case cre
     Then I should see "Missing Required Fields"
     Then I see "Select an Account" as "required"
 
-  @BTC-103
+  @XSP-103
   Scenario: Submit case without selecting impact level
     When I select "Test Product" from "Select a Product"
     When I select "Test Account" from "Select an Account"
@@ -49,7 +49,7 @@ Feature: Validate error banner for missing required fields in CE Portal case cre
     Then I should see "Missing Required Fields"
     Then I see "Impact" as "required"
 
-  @BTC-104
+  @XSP-58
   Scenario: Submit case without entering a description
     When I select "Test Product" from "Select a Product"
     When I select "Test Account" from "Select an Account"
@@ -59,7 +59,7 @@ Feature: Validate error banner for missing required fields in CE Portal case cre
     Then I should see "Missing Required Fields"
     Then I see "Description" as "required"
 
-  @BTC-105
+  @XSP-105
   Scenario: Submit case without filling multiple mandatory fields
     When I select "Test Product" from "Select a Product"
     When I click on "Submit"

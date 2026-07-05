@@ -19,7 +19,7 @@ interface TestScenario {
  * Converts Excel test cases to Gherkin feature files
  * 
  * Excel Format:
- * Column A: Test Case ID (e.g., BTC-135)
+ * Column A: Test Case ID (e.g., XSP-135)
  * Column B: Scenario Name
  * Column C: Tags (comma-separated, e.g., @smoke, @regression)
  * Column D: Action (Click, Enter, Select, Wait, Verify, Navigate, etc.)
@@ -214,7 +214,7 @@ Example:
   npx ts-node tools/excel-to-gherkin.ts test-cases.xlsx features
 
 Excel Format:
-  Column A: Test Case ID (e.g., BTC-135)
+  Column A: Test Case ID (e.g., XSP-135)
   Column B: Scenario Name
   Column C: Tags (comma-separated, e.g., @smoke, @regression)
   Column D: Action (Click, Enter, Select, Wait, Verify, Navigate, etc.)

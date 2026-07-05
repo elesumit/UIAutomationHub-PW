@@ -14,7 +14,7 @@ Feature: Create Case in CE Portal and verify in Salesforce
     When I click on "Continue"
     When I wait for 3 seconds
 
-  @BTC-181
+  @XSP-181
   Scenario Outline: Create Case and validate in Portal
     # Case creation
     When I click on "Support"

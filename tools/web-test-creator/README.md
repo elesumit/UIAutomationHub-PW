@@ -106,7 +106,7 @@ Configuration:
 
 ### Step 2: Fill in Test Steps
 Open the Excel file and fill in:
-- **Column A:** Test Case ID (e.g., BTC-201)
+- **Column A:** Test Case ID (e.g., XSP-201)
 - **Column B:** Scenario Name
 - **Column C:** Tags (@smoke, @regression)
 - **Column D:** Action (Open, Click, Type, Choose, Check)
@@ -116,7 +116,7 @@ Open the Excel file and fill in:
 **Example:**
 ```
 Test Case ID | Scenario Name | Tags          | Action | What to Click/Enter | Value
-BTC-201      | Login Test    | @smoke        | Open   | CE Portal          |
+XSP-201      | Login Test    | @smoke        | Open   | CE Portal          |
              |               |               | Click  | Log in button      |
              |               |               | Type   | Username field     | admin
              |               |               | Click  | Continue button    |
@@ -130,7 +130,7 @@ BTC-201      | Login Test    | @smoke        | Open   | CE Portal          |
 
 ### Step 4: Run from Jira
 1. Go to Jira
-2. Create Test Execution with your test case (e.g., BTC-201)
+2. Create Test Execution with your test case (e.g., XSP-201)
 3. Test runs automatically via GitHub Actions
 4. Results appear in Jira
 
