@@ -52,7 +52,7 @@ resource "azurerm_cognitive_deployment" "model" {
 
   sku {
     name     = "GlobalStandard" # real quota confirmed here (500 K-TPM); DataZoneStandard has 0
-    capacity = 50                # 1 K-TPM units; tune after measuring usage
+    capacity = 50               # 1 K-TPM units; tune after measuring usage
   }
 
   version_upgrade_option = "OnceNewDefaultVersionAvailable"
