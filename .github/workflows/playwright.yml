@@ -57,7 +57,7 @@ on:
         required: false
         type: string
       test_plan_key:
-        description: 'Xray Test Plan Key (optional - e.g., BTC-101)'
+        description: 'Xray Test Plan Key (optional - e.g., XSP-101)'
         required: false
         type: string
 
@@ -80,7 +80,7 @@ jobs:
         id: normalize
         run: |
           printf 'test_profile=%s\n'      "${{ github.event.inputs.test_profile }}"      >> "$GITHUB_OUTPUT"
-          # Allowlist test_plan_key to BTC-<digits> — rejects shell metacharacters before
+          # Allowlist test_plan_key to XSP-<digits> — rejects shell metacharacters before
           # the value is interpolated into curl URLs or echo lines in downstream steps.
           RAW_PLAN_KEY="${{ github.event.inputs.test_plan_key }}"
           if [ -n "$RAW_PLAN_KEY" ] && ! echo "$RAW_PLAN_KEY" | grep -qE '^[A-Z]+-[0-9]+$'; then

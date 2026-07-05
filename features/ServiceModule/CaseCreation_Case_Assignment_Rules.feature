@@ -4,7 +4,7 @@ Feature: Create Case in CE Portal and verify the Queue in Salesforce
   I want to create a case in the CE Portal
   So that I can verify it in Salesforce
 
-  @OSF-534 @smoke @BTC-370
+  @OSF-534 @smoke @XSP-370
   Scenario Outline: Create Case and Validate <expected_queue> queue in Salesforce
     Given I navigate to CE Portal ""
     When I click on "Log in"

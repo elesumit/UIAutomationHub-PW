@@ -15,7 +15,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
     When I wait for 3 seconds
 
 
-  @BTC-87 @regression
+  @XSP-87 @regression
   Scenario: Verify option to remove attachment before submission
     When I click on "Support"
     When I wait for 5 seconds
@@ -47,7 +47,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
     
 
 
-  # @BTC-88 @regression
+  # @XSP-88 @regression
   # Scenario: Upload attachment marked as PHI
   #   When I click on "Support"
   #   When I wait for 5 seconds
@@ -72,7 +72,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
   #   When I log captured "caseId"
   #   Then I see "Status" as "New"
 
-  # @BTC-89 @regression
+  # @XSP-89 @regression
   # Scenario: Verify Case PHI checkbox automatically updates
   #   When I click on "Support"
   #   When I wait for 5 seconds
@@ -103,7 +103,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
 
   
 
-  # @BTC-91 @regression
+  # @XSP-91 @regression
   # Scenario: Test attachment upload functionality in chat
   #   When I click on "Support"
   #   When I wait for 5 seconds
@@ -131,7 +131,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
   #   When I wait for 3 seconds
   #   Then I should see chat message with attachment
 
-  # @BTC-92 @regression
+  # @XSP-92 @regression
   # Scenario: Verify attachment handler processes files correctly
   #   When I click on "Support"
   #   When I wait for 5 seconds
@@ -156,7 +156,7 @@ Feature: Case Creation with Attachment Handling in CE Portal
   #   When I log captured "caseId"
   #   Then I see "Status" as "New"
 
-  # @BTC-93 @regression
+  # @XSP-93 @regression
   # Scenario: An attachment can be removed while creating the case
   #   When I click on "Support"
   #   When I wait for 5 seconds

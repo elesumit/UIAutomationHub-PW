@@ -5,7 +5,7 @@ Feature: Create Patient Safety Cases and Validate in Salesforce - Two Cases with
   I want additional Patient Safety-related fields to appear and be validated when "Is this a Patient Safety case?" is selected
   So that I can capture complete and accurate patient safety information during case creation
 
-  @BTC-340
+  @XSP-340
   Scenario Outline: Create Patient Safety Cases and Validate in Salesforce
     Given I navigate to CE Portal ""
     When I click on "Log in"

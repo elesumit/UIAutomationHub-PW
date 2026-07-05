@@ -314,7 +314,7 @@ app.http('jira-issue-types', {
   route: 'jira-issue-types',
   handler: async (request, context) => {
     try {
-      const response = await axios.get(`${JIRA_BASE_URL}/rest/api/3/project/BTC`, {
+      const response = await axios.get(`${JIRA_BASE_URL}/rest/api/3/project/XSP`, {
         headers: { Authorization: jiraAuthHeader(), 'Content-Type': 'application/json' },
       });
       return json(200, { issueTypes: response.data.issueTypes });
@@ -407,7 +407,7 @@ app.http('upload-to-jira-github', {
       const formData = new FormData();
       formData.append('file', Buffer.from(content, 'utf-8'), { filename: 'test.feature', contentType: 'text/plain' });
 
-      const importResponse = await axios.post(`${XRAY_BASE}/import/feature?projectKey=BTC`, formData, {
+      const importResponse = await axios.post(`${XRAY_BASE}/import/feature?projectKey=XSP`, formData, {
         headers: { Authorization: `Bearer ${token}`, ...formData.getHeaders() },
         validateStatus: () => true,
       });
@@ -513,7 +513,7 @@ app.http('create-test-execution', {
             testIssueIds: testIssueIds.map(String),
             jira: {
               fields: {
-                project: { key: 'BTC' },
+                project: { key: 'XSP' },
                 summary: summary || `Test Execution - ${new Date().toISOString()}`,
                 issuetype: { name: 'Test Execution' },
               },
@@ -560,7 +560,7 @@ app.http('create-test-execution', {
         error: 'Failed to create Test Execution',
         details: error.message,
         suggestion: isTestNotFound
-          ? 'The BTC-XXX test keys in your feature file do not exist in Jira. Create them first, or remove the @BTC-XXX tags.'
+          ? 'The XSP-XXX test keys in your feature file do not exist in Jira. Create them first, or remove the @XSP-XXX tags.'
           : 'Check Xray credentials and API access.',
       });
     }
@@ -578,7 +578,7 @@ app.http('execute-test', {
 
       const EXEC_KEY_RE = /^[A-Z][A-Z0-9]+-\d+$/;
       if (!testExecutionKey || !EXEC_KEY_RE.test(testExecutionKey)) {
-        return json(400, { error: 'Invalid testExecutionKey format — expected e.g. BTC-123' });
+        return json(400, { error: 'Invalid testExecutionKey format — expected e.g. XSP-123' });
       }
 
       const ALLOWED_PROFILES = ['smoke', 'regression'];

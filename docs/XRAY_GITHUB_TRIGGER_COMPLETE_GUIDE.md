@@ -106,7 +106,7 @@ jobs:
           # Xray Configuration
           XRAY_CLIENT_ID=${{ secrets.XRAY_CLIENT_ID }}
           XRAY_CLIENT_SECRET=${{ secrets.XRAY_CLIENT_SECRET }}
-          XRAY_PROJECT_KEY=BTC
+          XRAY_PROJECT_KEY=XSP
           XRAY_TEST_PLAN_KEY=${{ github.event.client_payload.test_plan_key }}
           
           # Execution Environment
@@ -277,9 +277,9 @@ Click **"+ Add another header"** for each:
 
 ### **Method 1: Create Test Execution in Jira**
 
-1. Go to your Test Plan in Jira (e.g., BTC-104)
+1. Go to your Test Plan in Jira (e.g., XSP-58)
 2. Click **"Create Test Execution"**
-3. Select the tests you want to run (e.g., BTC-80 for smoke tests)
+3. Select the tests you want to run (e.g., XSP-80 for smoke tests)
 4. Fill in any required fields
 5. Click **"Create"**
 
@@ -304,7 +304,7 @@ curl -X POST \
   -d '{
     "event_type": "xray-trigger",
     "client_payload": {
-      "test_plan_key": "BTC-104",
+      "test_plan_key": "XSP-58",
       "test_profile": "smoke"
     }
   }'
@@ -685,7 +685,7 @@ Authorization: Bearer ghp_YOUR_TOKEN_HERE
 
 1. **Check feature file tags:**
 ```gherkin
-@BTC-80 @smoke @regression
+@XSP-80 @smoke @regression
 Scenario: Create Case and Validate in Salesforce
 ```
 
@@ -824,7 +824,7 @@ Use this checklist to quickly diagnose issues:
      https://api.github.com/repos/ORG/REPO/dispatches \
      -H "Authorization: Bearer YOUR_TOKEN" \
      -H "Content-Type: application/json" \
-     -d '{"event_type":"xray-trigger","client_payload":{"test_plan_key":"BTC-104","test_profile":"smoke"}}'
+     -d '{"event_type":"xray-trigger","client_payload":{"test_plan_key":"XSP-58","test_profile":"smoke"}}'
    ```
 
 2. **Check curl response:**
@@ -934,8 +934,8 @@ Configure these in: `https://github.com/YOUR_ORG/YOUR_REPO/settings/secrets/acti
 └─────────────────────────────────────────────────────────────────┘
 
 1. User Creates Test Execution in Jira Xray
-   └─> Test Plan: BTC-104
-   └─> Select Tests: BTC-80 (@smoke)
+   └─> Test Plan: XSP-58
+   └─> Select Tests: XSP-80 (@smoke)
 
 2. Jira Automation Rule Triggers
    └─> Field value changed: Issue Type
@@ -944,7 +944,7 @@ Configure these in: `https://github.com/YOUR_ORG/YOUR_REPO/settings/secrets/acti
 3. Webhook Sent to GitHub API
    └─> POST https://api.github.com/repos/ORG/REPO/dispatches
    └─> Event: xray-trigger
-   └─> Payload: { test_plan_key: "BTC-104", test_profile: "smoke" }
+   └─> Payload: { test_plan_key: "XSP-58", test_profile: "smoke" }
 
 4. GitHub Actions Workflow Starts
    └─> Workflow: xray-trigger.yml

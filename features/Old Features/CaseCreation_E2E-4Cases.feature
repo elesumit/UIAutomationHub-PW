@@ -4,7 +4,7 @@ Feature: Create Multiple Cases and Verify in Salesforce
   I want to login once and create multiple cases with different products
   So that I can verify all cases in Salesforce efficiently
 
-  @BTC-82
+  @XSP-82
   Scenario: Login once and create multiple cases
     # CE Portal Login (once)
     Given I navigate to CE Portal ""
