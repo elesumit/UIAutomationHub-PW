@@ -1,6 +1,6 @@
 @E2E @provider @regression
 Feature: E2E - Provider BU Sales Cycle (Lead to Closed Won)
-  As a Veradigm sales team member
+  As a ScriptlessIQ sales team member
   I want to progress a Provider lead through the full sales lifecycle
   So that a qualified lead becomes a Closed Won opportunity with an active order and revenue schedule
 
@@ -130,7 +130,7 @@ Feature: E2E - Provider BU Sales Cycle (Lead to Closed Won)
     When I click on "Convert"
     When I wait for 3 seconds
 
-    # -- Name opportunity per Veradigm naming convention --
+    # -- Name opportunity per ScriptlessIQ naming convention --
     When I enter "Automation Test Practice - Provider E2E" in "Opportunity Name"
     When I click on "Convert"
     When I wait for 5 seconds

@@ -79,9 +79,9 @@ report.generate({
     }
   },
   customData: {
-    title: 'Veradigm Playwright Test Report',
+    title: 'ScriptlessIQ Playwright Test Report',
     data: [
-      { label: 'Project', value: 'Veradigm Framework' },
+      { label: 'Project', value: 'ScriptlessIQ Framework' },
       { label: 'Release', value: '1.0.0' },
       { label: 'Execution Time', value: new Date().toLocaleString() },
       { label: 'Environment', value: process.env.NODE_ENV || 'Test' }
@@ -89,9 +89,9 @@ report.generate({
   },
   displayDuration: true,
   displayReportTime: true,
-  pageTitle: 'Veradigm Test Report',
-  reportName: 'Veradigm Automation Test Results',
-  pageFooter: '<div style="text-align:center"><p>Veradigm Playwright Framework - Powered by LocatorPro</p></div>',
+  pageTitle: 'ScriptlessIQ Test Report',
+  reportName: 'ScriptlessIQ Automation Test Results',
+  pageFooter: '<div style="text-align:center"><p>ScriptlessIQ Playwright Framework - Powered by LocatorPro</p></div>',
   customStyle: path.join(__dirname, 'custom-report-style.css'),
   openReportInBrowser: false,
   saveCollectedJSON: true,

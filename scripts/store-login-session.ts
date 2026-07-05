@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
     console.log('[DEBUG] Launching browser...');
     browser = await chromium.launch({ headless: false });
     const page = await browser.newPage();
-    const url = process.env.CE_QA_URL || 'https://veradigmllc--qa.sandbox.my.site.com/veradigmsupport/s/';
+    const url = process.env.CE_QA_URL || 'https://your-app-qa.example.com';
     console.log('[DEBUG] Navigating to:', url);
     await page.goto(url);
     console.log('[DEBUG] Please complete the login manually in the opened browser window.');

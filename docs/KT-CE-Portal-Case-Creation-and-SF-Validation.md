@@ -57,7 +57,7 @@ Every case requires these fields to be filled before submission:
 
 | Field | Step Example | Notes |
 |-------|-------------|-------|
-| **Product** | `When I select "Veradigm Fiscal Management..." from "Select a Product"` | Dropdown selection |
+| **Product** | `When I select "ScriptlessIQ Fiscal Management..." from "Select a Product"` | Dropdown selection |
 | **Account** | `When I select "Meena's General Practice1" from "Select an Account"` | Dropdown, appears after Product |
 | **Impact** | `When I select "Partial loss of service" from "Impact"` | Dropdown |
 | **Subject** | `When I enter "Case description" in "Subject"` | Free text |

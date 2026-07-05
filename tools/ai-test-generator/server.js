@@ -488,7 +488,7 @@ app.get('/api/jira/story/:storyId', async (req, res) => {
     
     // Jira API credentials
     const jiraBaseUrl = process.env.JIRA_BASE_URL || 'https://automationhubpw.atlassian.net';
-    const jiraEmail = process.env.JIRA_USER || 'sumit.gupta2@veradigm.com';
+    const jiraEmail = process.env.JIRA_USER || 'automation@example.com';
     const jiraApiToken = process.env.JIRA_API_TOKEN;
     
     if (!jiraApiToken) {

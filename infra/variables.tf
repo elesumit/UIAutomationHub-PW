@@ -13,7 +13,7 @@ variable "mi_client_id" {
 }
 
 variable "custom_domain" {
-  description = "Full custom domain (e.g., sbom.internal.veradigm.com)"
+  description = "Full custom domain (e.g., sbom.internal.example.com)"
   type        = string
 }
 

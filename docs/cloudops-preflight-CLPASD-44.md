@@ -20,7 +20,7 @@
 
 | Item | Value |
 |---|---|
-| Subscription | Neon — Veradigm Tools — `c4b21de8-bb1c-4efb-b4ec-9431dc344558` |
+| Subscription | Neon — ScriptlessIQ Tools — `c4b21de8-bb1c-4efb-b4ec-9431dc344558` |
 | Tenant | `21f2717a-4fc6-4665-b7ad-b490a46167e3` |
 | Resource group | `my-automation-rg` |
 | Per-site runner MI (client id) | `c990a453-711f-44d9-9285-8d4caa179d30` |

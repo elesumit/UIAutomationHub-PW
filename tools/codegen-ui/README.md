@@ -12,7 +12,7 @@ Open browser: http://localhost:3000
 ### Step 2: Fill in Test Details
 - **Test Case ID:** XSP-201
 - **Scenario Name:** Create Case
-- **Starting URL:** https://qa.customerexperience.veradigm.com
+- **Starting URL:** https://qa.example.com
 - **Tags:** @smoke, @regression
 
 ### Step 3: Record Your Test

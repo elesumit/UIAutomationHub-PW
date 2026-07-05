@@ -36,7 +36,7 @@ app.post('/api/start-recording', (req: any, res: any) => {
   codegenProcess = spawn('npx', [
     'playwright',
     'codegen',
-    url || 'https://qa.customerexperience.veradigm.com',
+    url || 'https://qa.example.com',
     '--target=javascript',
     '--save-storage=auth.json'
   ], {
