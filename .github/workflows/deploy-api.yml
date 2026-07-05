@@ -45,6 +45,7 @@ jobs:
         uses: azure/login@v2
         with:
           client-id: c990a453-711f-44d9-9285-8d4caa179d30
+          subscription-id: c4b21de8-bb1c-4efb-b4ec-9431dc344558
           tenant-id: 21f2717a-4fc6-4665-b7ad-b490a46167e3
 
       - name: Deploy to Function App
