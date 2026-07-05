@@ -134,7 +134,7 @@ jobs:
         id: validate_plan
         run: |
           TEST_PLAN_KEY="${{ github.event.client_payload.test_plan_key || github.event.inputs.test_plan_key }}"
-          ALLOWED_TEST_PLAN="BTC-104"
+          ALLOWED_TEST_PLAN="XSP-58"
           
           if [ -n "$TEST_PLAN_KEY" ] && [ "$TEST_PLAN_KEY" != "null" ]; then
             if [ "$TEST_PLAN_KEY" != "$ALLOWED_TEST_PLAN" ]; then

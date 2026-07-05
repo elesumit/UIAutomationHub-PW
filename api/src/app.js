@@ -287,7 +287,7 @@ app.http('fetch-test-cases', {
       const token = await xrayAuthenticate();
       const graphqlQuery = {
         query: `{
-          getTestPlans(jql: "key = BTC-104", limit: 1) {
+          getTestPlans(jql: "key = XSP-58", limit: 1) {
             results {
               issueId
               jira(fields: ["key", "summary"])
@@ -434,10 +434,10 @@ app.http('upload-to-jira-github', {
         updatedContent = updatedContent.replace(new RegExp(`@JIRA_PLACEHOLDER_${index + 1}\\b`, 'g'), `@${key}`);
       });
 
-      // Link tests to Test Plan BTC-104.
+      // Link tests to Test Plan XSP-58.
       if (testIds.length > 0) {
         try {
-          const issueResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/BTC-104`, {
+          const issueResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/XSP-58`, {
             headers: { Authorization: jiraAuthHeader(), 'Content-Type': 'application/json' },
           });
           const testPlanId = issueResponse.data.id;
@@ -452,7 +452,7 @@ app.http('upload-to-jira-github', {
             }),
           });
         } catch (linkError) {
-          context.warn(`Linking to BTC-104 failed: ${linkError.message}`);
+          context.warn(`Linking to XSP-58 failed: ${linkError.message}`);
         }
       }
 
@@ -478,7 +478,7 @@ app.http('upload-to-jira-github', {
         jiraUrl: `${JIRA_BASE_URL}/browse/${mainTestKey}`,
         githubUrl,
         githubError,
-        message: `Test Case(s) created: ${[...testKeys, ...preconditionKeys].join(', ')} — linked to BTC-104`,
+        message: `Test Case(s) created: ${[...testKeys, ...preconditionKeys].join(', ')} — linked to XSP-58`,
       });
     } catch (error) {
       context.error('upload-to-jira-github failed:', error.message);
@@ -534,9 +534,9 @@ app.http('create-test-execution', {
       const testExecutionKey = testExecution.jira.key;
       const testExecutionId = testExecution.issueId;
 
-      // Link execution to Test Plan BTC-104.
+      // Link execution to Test Plan XSP-58.
       try {
-        const testPlanResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/BTC-104`, {
+        const testPlanResponse = await axios.get(`${JIRA_BASE_URL}/rest/api/3/issue/XSP-58`, {
           headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
         });
         await fetch(`${XRAY_BASE}/graphql`, {
@@ -550,7 +550,7 @@ app.http('create-test-execution', {
           }),
         });
       } catch (linkError) {
-        context.warn(`Failed to link execution to BTC-104: ${linkError.message}`);
+        context.warn(`Failed to link execution to XSP-58: ${linkError.message}`);
       }
 
       return json(200, {
@@ -599,7 +599,7 @@ app.http('execute-test', {
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
         event_type: 'xray-trigger',
-        client_payload: { test_execution_key: testExecutionKey, test_plan_key: 'BTC-104', test_profile: safeProfile },
+        client_payload: { test_execution_key: testExecutionKey, test_plan_key: 'XSP-58', test_profile: safeProfile },
       });
 
       // Best-effort: resolve the freshly-created workflow run id.
