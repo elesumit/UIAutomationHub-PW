@@ -63,7 +63,7 @@ resource "azurerm_function_app_flex_consumption" "app" {
     # Azure AI Foundry — MI auth, no API key needed (aifoundry.tf)
     AIF_ENDPOINT        = azurerm_cognitive_account.aif.endpoint
     AIF_DEPLOYMENT_NAME = azurerm_cognitive_deployment.model.name
-    AIF_API_VERSION     = "2024-10-21"
+    AIF_API_VERSION     = "2025-04-01-preview" # gpt-5 family needs a newer version than 2024-10-21
 
     # Secrets — passed as plain app-setting values (NOT @Microsoft.KeyVault refs).
     #

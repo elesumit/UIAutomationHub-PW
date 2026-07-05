@@ -213,8 +213,10 @@ Output only the Feature file content, no explanations.`;
           { role: 'system', content: buildSystemPrompt() },
           { role: 'user',   content: userPrompt },
         ],
-        temperature: 0.2,
-        max_tokens:  8000,
+        // gpt-5 family (reasoning models): uses max_completion_tokens, not
+        // max_tokens, and only supports the default temperature (1) — passing
+        // temperature: 0.2 returns 400. Was written for gpt-4o originally.
+        max_completion_tokens: 8000,
       });
 
       const content = (result.choices[0].message.content || '')
