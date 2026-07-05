@@ -31,7 +31,7 @@ jobs:
     # Skip on template repo — only run on site repos created from this template
     if: github.repository != 'techops/az-staticWeb-template'
     name: Terraform Validate
-    runs-on: az-terraform
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout files
         id: checkout
@@ -120,7 +120,7 @@ jobs:
   Terraform-Deploy:
     if: github.ref == 'refs/heads/main'
     name: Terraform Deploy
-    runs-on: az-terraform
+    runs-on: ubuntu-latest
     needs: Terraform-Validate
     environment:
       name: production
