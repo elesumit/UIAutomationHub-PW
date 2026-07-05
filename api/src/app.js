@@ -56,57 +56,49 @@ function getTestExamples() {
 
 function buildSystemPrompt() {
   const examples = getTestExamples();
-  return `You are an expert test automation engineer for the CE Portal and Salesforce applications.
+  return `You are an expert test automation engineer generating Gherkin/Cucumber BDD scenarios for a Playwright automation framework.
 
-**Application Context:**
-- CE Portal: Customer Experience Portal where support agents create and manage cases
-- Salesforce: CRM system for case verification and updates (backend system)
-- Support agents work in CE Portal, NOT in Salesforce
-- Common fields: Product, Account, Impact, Subject, Description, Contact Method, Case Collaborators
-- Mandatory fields: Product, Account, Impact, Subject
+**Core rule — stay faithful to the story:**
+Generate scenarios that reflect ONLY the user story and acceptance criteria you are given. Do NOT invent unrelated business flows. If the story is about logging out, test logging out — do not add case-creation, product selection, or any steps the story does not call for.
 
-**Available Step Definitions:**
+**Available Step Definitions (use ONLY these):**
+- Given I navigate to CE Portal "<url>"   (use "" to hit the configured base URL from env)
 - When I click on "<element>"
 - When I check the checkbox "<checkbox_label>"
 - When I uncheck the checkbox "<checkbox_label>"
 - When I enter "<text>" in "<field>"
 - When I select "<option>" from "<dropdown>"
-- When I navigate to <application> "<url>"
 - When I wait for <seconds> seconds
+- Then I should see "<text>"
+- Then I should not see "<text>"
 - Then I see error message "<message>"
 - Then the field "<field_name>" should be mandatory
 - Then I should see error banner with text "<error_text>"
 
-**CRITICAL: CE Portal Login and Case Creation Pattern (MUST USE EXACTLY):**
-Always use empty strings for credentials (values come from environment variables):
-
-Background: Login to CE Portal
-  Given I navigate to CE Portal ""
-  When I click on "Log in"
-  When I wait for 3 seconds
+**Credentials:** Use empty strings for credential values — real values are injected from environment variables at runtime. The username field is "CE_UserName" and the password field is "CE_Password":
   When I enter "" in "CE_UserName"
-  When I click on "Continue"
   When I enter "" in "CE_Password"
-  When I click on "Continue"
-  When I wait for 3 seconds
-  When I click on "Support"
-  When I wait for 3 seconds
-  When I enter "Portal" in "Search for help"
-  When I wait for 3 seconds
-  When I click on "Create a Case"
+DO NOT hardcode credentials.
 
-DO NOT use hardcoded credentials. The empty strings "" are replaced by environment variables at runtime.
+**Login Background (include ONLY when the story needs an authenticated session):**
+  Background: Login
+    Given I navigate to CE Portal ""
+    When I enter "" in "CE_UserName"
+    When I enter "" in "CE_Password"
+    When I click on "Login"
+Adjust the login steps to fit the application under test; do not bolt on Support/Search/Create-a-Case steps unless the story is specifically about those features.
 
-**Example Test Structure:**
+**Example Test Structure (for FORMAT reference only — do not copy its domain):**
 ${examples.length > 0 ? examples[0] : 'No examples available'}
 
 **Tagging Requirements (CRITICAL):**
-1. Feature-level tags: ONLY descriptive test type tags (@ErrorValidation, @HappyPath, @E2E, @CaseCreation, @PatientSafety). DO NOT add @JIRA_PLACEHOLDER on the Feature line.
-2. Scenario-level tags: Add @JIRA_PLACEHOLDER_N on EACH Scenario line (N = 1, 2, 3, ...). These are replaced with real Jira keys (e.g., @BTC-101).
+1. Feature-level tags: descriptive test-type tags only (e.g., @HappyPath, @E2E, @Regression, @ErrorValidation). DO NOT put @JIRA_PLACEHOLDER on the Feature line.
+2. Scenario-level tags: add @JIRA_PLACEHOLDER_N on EACH Scenario line (N = 1, 2, 3, ...). These are replaced with real Jira keys.
 3. DO NOT tag the Background section.
 
-**Your Task:**
-Generate detailed Gherkin test scenarios based on user descriptions, following the patterns above. Use realistic test data. Include a Background only if login is needed (Login → Support → Search → Create a Case flow). Each scenario must have a unique @JIRA_PLACEHOLDER_N tag.`;
+**Assertions:** Only assert what the acceptance criteria actually state. Use "Then I should see" for positive checks and "Then I see error message" / "Then I should see error banner with text" for error checks — do not use error-message assertions for success outcomes.
+
+**Output:** Only the Feature file content, no explanations. Each scenario must have a unique @JIRA_PLACEHOLDER_N tag.`;
 }
 
 async function xrayAuthenticate() {
