@@ -23,7 +23,7 @@ provider "azurerm" {
   resource_provider_registrations = "none"
   use_oidc                        = true
   tenant_id                       = "21f2717a-4fc6-4665-b7ad-b490a46167e3"
-  subscription_id                 = "c4b21de8-bb1c-4efb-b4ec-9431dc344558" 
+  subscription_id                 = "c4b21de8-bb1c-4efb-b4ec-9431dc344558"
   client_id                       = var.mi_client_id
 
   # REQUIRED with shared_access_key_enabled = false on the FC1 runtime storage
