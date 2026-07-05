@@ -65,20 +65,23 @@ resource "azurerm_function_app_flex_consumption" "app" {
     AIF_DEPLOYMENT_NAME = azurerm_cognitive_deployment.model.name
     AIF_API_VERSION     = "2024-10-21"
 
-    # Secrets — KV references.
-    # GITHUB_COPILOT_TOKEN removed — generation now uses Azure AI Foundry MI auth.
+    # Secrets — passed as plain app-setting values (NOT @Microsoft.KeyVault refs).
     #
-    # GITHUB_TOKEN uses the VERSIONED secret id (no trailing slash) on purpose:
-    # a versionless reference (".../github-token/") is cached by the Functions
-    # host and is NOT re-resolved when the secret value rotates — so a token
-    # rotated by Terraform keeps serving the stale cached value until a ~24h
-    # refresh or a full restart. Pinning the version makes the app-setting string
-    # change on every rotation, forcing immediate re-resolution on the next deploy.
-    GITHUB_TOKEN       = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.github_token.id})"
-    JIRA_USER          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_user.versionless_id}/)"
-    JIRA_API_TOKEN     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jira_api_token.versionless_id}/)"
-    XRAY_CLIENT_ID     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_id.versionless_id}/)"
-    XRAY_CLIENT_SECRET = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.xray_client_secret.versionless_id}/)"
+    # The Flex Consumption (FC1) plan does not resolve @Microsoft.KeyVault(...)
+    # references: the configreferences ARM endpoint returns 404 on this SKU, and
+    # the host serves the literal reference string as the value — which is why
+    # every Jira/Xray call authenticated as "anonymous" and returned 404
+    # (verified 2026-07-05). The secrets still live in Key Vault (keyvault.tf) for
+    # rotation/audit, but the Function App reads them directly from these TF vars.
+    # Values come from TF_VAR_* (GitHub repo secrets in CI) or secrets.auto.tfvars
+    # locally. Trade-off: values are stored in the Function App's app settings
+    # (encrypted at rest) rather than referenced from KV — acceptable here; revisit
+    # if this app moves to a plan that supports KV references.
+    GITHUB_TOKEN       = var.github_token
+    JIRA_USER          = var.jira_user
+    JIRA_API_TOKEN     = var.jira_api_token
+    XRAY_CLIENT_ID     = var.xray_client_id
+    XRAY_CLIENT_SECRET = var.xray_client_secret
   }
 
   auth_settings_v2 {
