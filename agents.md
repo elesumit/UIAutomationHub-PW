@@ -6,12 +6,20 @@ first PR merges; nothing else regenerates this file.
 ## Identity
 
 - **Site:** `automation-pw`
-- **URL:** https://automationhub.com
+- **URL:** https://brave-forest-0dc5e230f.7.azurestaticapps.net (primary, East US 2) /
+  https://orange-water-00a981210.7.azurestaticapps.net (DR, Central US). The
+  `automationhub.com` custom domain is not wired up — that requires a shared Front Door
+  (`Ue1NePrdFrontDoorCdn` in `Ue1NePrdResourceGroup`) that does not exist in this
+  subscription; `infra/frontdoor.tf` was removed 2026-07-04 for the same reason as the
+  stale AAD app above. Bind a custom domain directly to the SWA later if needed
+  (`azurerm_static_web_app_custom_domain`), no Front Door required.
 - **Resource group:** `my-automation-rg`
 - **Per-site managed identity:** `mi-staticweb-automation-pw` (used by `deploy-infra.yml`)
-- **Per-site Entra app registration:** `app-staticweb-automation-pw-sso`
-  - **App (client) ID:** `ca02bb25-1a23-4a92-af14-07e36ad28815`
-  - The OAuth client end users sign into. Owned by `app-staticweb-sso` (the platform's bootstrap principal).
+- **Per-site Entra app registration:** `My Automation Hub`
+  - **App (client) ID:** `63bffde2-4bde-494f-b4f4-df1c019096a9`
+  - The OAuth client end users sign into. Created manually via `az ad app create` (the
+    `ca02bb25-1a23-4a92-af14-07e36ad28815` app previously documented here does not
+    exist in this tenant — that was stale template boilerplate, corrected 2026-07-04).
 
 ## Default access
 
@@ -33,7 +41,7 @@ higher — ask `#techops` if you don't have it):
 1. **Toggle "User assignment required" on the per-site SP.** This makes the
    app reg refuse tokens for unassigned users.
    ```bash
-   az ad sp update --id ca02bb25-1a23-4a92-af14-07e36ad28815 \
+   az ad sp update --id 63bffde2-4bde-494f-b4f4-df1c019096a9 \
      --set appRoleAssignmentRequired=true
    ```
 
@@ -46,7 +54,7 @@ higher — ask `#techops` if you don't have it):
      --mail-nickname "swa-automation-pw-users"
 
    # one-time: assign the group to the app (default app role)
-   APP_SP_ID=$(az ad sp show --id ca02bb25-1a23-4a92-af14-07e36ad28815 --query id -o tsv)
+   APP_SP_ID=$(az ad sp show --id 63bffde2-4bde-494f-b4f4-df1c019096a9 --query id -o tsv)
    GROUP_ID=$(az ad group show --group "swa-automation-pw-users" --query id -o tsv)
    az rest --method POST \
      --url "https://graph.microsoft.com/v1.0/groups/$GROUP_ID/appRoleAssignments" \
@@ -68,7 +76,7 @@ az ad group member remove --group "swa-automation-pw-users" --member-id <user-ob
 ## Reverting to open access
 
 ```bash
-az ad sp update --id ca02bb25-1a23-4a92-af14-07e36ad28815 \
+az ad sp update --id 63bffde2-4bde-494f-b4f4-df1c019096a9 \
   --set appRoleAssignmentRequired=false
 ```
 
@@ -77,11 +85,14 @@ enforced.
 
 ## Things deliberately NOT in this repo
 
-- **Front Door / DNS / WAF** — shared across all sites, managed in
-  `Ue1NePrdResourceGroup` (CloudOps). `infra/frontdoor.tf` only adds this site's
-  endpoint, route, custom domain, and DNS records into the shared profile.
-- **Redirect URI** — pre-registered on the per-site app reg at bootstrap time.
-  If you later add another custom domain, `#techops` adds the new URI.
-- **Client secret rotation** — handled by the bootstrap repo's rotation
-  workflow on a 2-year cadence. Don't rotate manually unless responding to a
-  compromise.
+- **Front Door / DNS / WAF** — not used. The original template assumed a shared
+  CloudOps-managed Front Door profile that doesn't exist in this subscription;
+  `infra/frontdoor.tf` was removed. The site is reached via the SWA's default
+  `*.azurestaticapps.net` hostname (or a custom domain bound directly to the SWA).
+- **Redirect URI** — registered manually via `az ad app update --web-redirect-uris`.
+  Set to both `https://brave-forest-0dc5e230f.7.azurestaticapps.net/.auth/login/aad/callback`
+  (real SWA hostname, works now) and `https://automationhub.com/.auth/login/aad/callback`
+  (won't resolve until a custom domain is bound, kept for later).
+- **Client secret rotation** — no platform automation for this app; rotate it
+  yourself via `az ad app credential reset --id 63bffde2-4bde-494f-b4f4-df1c019096a9`
+  and update the `AAD_CLIENT_SECRET` repo secret when it's due to expire.

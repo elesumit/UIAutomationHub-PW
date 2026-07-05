@@ -200,71 +200,21 @@ jobs:
           FOOTER
           rm "$WORKING_FILE_PATH"
 
-      # Log in to Azure CLI using OIDC — per-site managed identity from tfvars.
-      - name: Azure CLI login
-        uses: azure/login@v2
-        with:
-          client-id: c990a453-711f-44d9-9285-8d4caa179d30
-          tenant-id: 21f2717a-4fc6-4665-b7ad-b490a46167e3
-          subscription-id: c4b21de8-bb1c-4efb-b4ec-9431dc344558
-
-          
-
-      # Add site's custom domain to the shared WAF security policy.
-      # Required for managed TLS certificate deployment on Front Door.
-      # The AllowSWAAuthCallbacks custom rule on the WAF allows /.auth/ paths
-      # through so the Entra ID OAuth form_post callback is not blocked.
-      - name: Add custom domain to WAF security policy
-        run: |
-          SITE_NAME=$(terraform output -raw site_name 2>/dev/null || cat terraform.tfvars.json | python3 -c "import sys,json; print(json.load(sys.stdin)['site_name'])")
-          CUSTOM_DOMAIN_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Cdn/profiles/Ue1NePrdFrontDoorCdn/customDomains/${SITE_NAME}-internal-com"
-          ENDPOINT_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Cdn/profiles/Ue1NePrdFrontDoorCdn/afdEndpoints/Ue1NePrdFrontDoorEndpoint"
-          WAF_POLICY_ID="/subscriptions/54305029-7d35-40a9-8bf9-950963b449cc/resourceGroups/Ue1NePrdResourceGroup/providers/Microsoft.Network/frontDoorWebApplicationFirewallPolicies/Ue1NePrdFrontDoorWaf"
-
-          # Get current domains in the security policy
-          CURRENT_DOMAINS=$(az afd security-policy show \
-            --profile-name Ue1NePrdFrontDoorCdn \
-            --resource-group Ue1NePrdResourceGroup \
-            --security-policy-name Ue1NePrdFrontDoorSecPolicy \
-            --query "parameters.associations[].domains[].id" -o tsv 2>/dev/null || echo "")
-
-          # Check if our domain is already in the policy
-          if echo "$CURRENT_DOMAINS" | grep -q "$SITE_NAME-internal-com"; then
-            echo "Custom domain already in WAF security policy"
-          else
-            # Build domain list: existing + new
-            DOMAIN_ARGS="$ENDPOINT_ID"
-            for d in $CURRENT_DOMAINS; do
-              # Skip the endpoint (we already have it) and skip duplicates
-              if [[ "$d" != *"afdEndpoints"* ]]; then
-                DOMAIN_ARGS="$DOMAIN_ARGS $d"
-              fi
-            done
-            DOMAIN_ARGS="$DOMAIN_ARGS $CUSTOM_DOMAIN_ID"
-
-            az afd security-policy update \
-              --profile-name Ue1NePrdFrontDoorCdn \
-              --resource-group Ue1NePrdResourceGroup \
-              --security-policy-name Ue1NePrdFrontDoorSecPolicy \
-              --domains $DOMAIN_ARGS \
-              --waf-policy "$WAF_POLICY_ID" \
-              -o none
-            echo "Added custom domain to WAF security policy"
-          fi
-
       # Redirect URI registration (manual step):
-      # After deploy, add https://<site_name>.com/.auth/login/aad/callback
-      # to app-staticweb-sso in Azure Portal → App registrations → Authentication.
-      # Requires Global Admin for automated Graph API access, so this remains manual.
+      # After deploy, add https://<swa-hostname>/.auth/login/aad/callback
+      # to the "My Automation Hub" app registration in Azure Portal →
+      # App registrations → Authentication (or via `az ad app update --web-redirect-uris`).
 
       # NOTE: the keyless AzureWebJobsStorage strip is handled declaratively in
       # infra/functions.tf (azapi read-then-strip chain), per the fleet standard —
       # no workflow step needed.
 
-      # Extract SWA deployment tokens and set as repo secrets after apply
+      # Extract SWA deployment tokens and set as repo secrets after apply.
+      # Uses API_GITHUB_TOKEN (classic PAT, repo+workflow scope) — there is no
+      # separate bootstrap-platform PAT for this standalone deployment.
       - name: Set SWA deployment tokens
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT_BOOTSTRAP }}
+          GH_TOKEN: ${{ secrets.API_GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           PRIMARY_KEY=$(terraform output -raw swa_primary_api_key)
@@ -272,15 +222,3 @@ jobs:
           gh secret set SWA_DEPLOY_TOKEN_UE2 --repo "$REPO" --body "$PRIMARY_KEY"
           gh secret set SWA_DEPLOY_TOKEN_UC1 --repo "$REPO" --body "$DR_KEY"
           echo "SWA deployment tokens configured"
-
-      # Notify bootstrap repo that infra is deployed
-      - name: Trigger post-provisioning
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT_BOOTSTRAP }}
-          SITE_CONFIG: ${{ vars.SITE_CONFIG }}
-        run: |
-          curl -X POST \
-            -H "Authorization: token $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/techops/az-staticWeb-bootstrap/dispatches" \
-            -d "{\"event_type\":\"infra-deployed\",\"client_payload\":{\"config\":$SITE_CONFIG}}"
