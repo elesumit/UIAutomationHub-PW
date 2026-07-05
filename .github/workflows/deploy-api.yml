@@ -51,7 +51,7 @@ jobs:
       - name: Deploy to Function App
         uses: Azure/functions-action@v1
         with:
-          app-name: func-automation-pw-prd
+          app-name: func-automationhub-prd
           package: api
           # FC1 Flex Consumption: remote build off; deps installed above.
           scm-do-build-during-deployment: false
