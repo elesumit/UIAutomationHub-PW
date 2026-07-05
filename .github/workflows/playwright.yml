@@ -84,7 +84,7 @@ jobs:
           # the value is interpolated into curl URLs or echo lines in downstream steps.
           RAW_PLAN_KEY="${{ github.event.inputs.test_plan_key }}"
           if [ -n "$RAW_PLAN_KEY" ] && ! echo "$RAW_PLAN_KEY" | grep -qE '^[A-Z]+-[0-9]+$'; then
-            echo "❌ Invalid test_plan_key format: $RAW_PLAN_KEY (expected e.g. BTC-104)"; exit 1
+            echo "❌ Invalid test_plan_key format: $RAW_PLAN_KEY (expected e.g. XSP-58)"; exit 1
           fi
           printf 'test_plan_key=%s\n'     "$RAW_PLAN_KEY"                                >> "$GITHUB_OUTPUT"
           printf 'environment=%s\n'       "${{ github.event.inputs.environment }}"        >> "$GITHUB_OUTPUT"

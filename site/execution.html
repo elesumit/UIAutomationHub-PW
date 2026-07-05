@@ -275,7 +275,7 @@
         <span>▶️</span>
         <span>Test Execution</span>
       </h1>
-      <p>Execute existing test cases from BTC-104</p>
+      <p>Execute existing test cases from XSP-58</p>
     </div>
 
     <div class="card">
@@ -285,7 +285,7 @@
       </h2>
 
       <div class="info-box">
-        <p><strong>How it works:</strong> Select test cases from BTC-104, click Execute, and a Test Execution will be created in Jira. Tests will run via GitHub Actions, and results will be posted to Slack automatically.</p>
+        <p><strong>How it works:</strong> Select test cases from XSP-58, click Execute, and a Test Execution will be created in Jira. Tests will run via GitHub Actions, and results will be posted to Slack automatically.</p>
       </div>
 
       <div id="selectedCount" class="selected-count" style="display: none;">
@@ -293,7 +293,7 @@
       </div>
 
       <div class="test-list" id="testList">
-        <div class="loading">Loading test cases from BTC-104...</div>
+        <div class="loading">Loading test cases from XSP-58...</div>
       </div>
 
       <button class="execute-button" id="executeButton" onclick="executeTests()" disabled>
@@ -360,7 +360,7 @@
         allTests = data.testCases;
 
         if (allTests.length === 0) {
-          document.getElementById('testList').innerHTML = '<div class="loading">No test cases found in BTC-104</div>';
+          document.getElementById('testList').innerHTML = '<div class="loading">No test cases found in XSP-58</div>';
           return;
         }
 

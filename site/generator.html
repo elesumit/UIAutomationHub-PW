@@ -560,14 +560,14 @@
             <ul style="margin: 5px 0 0 20px;">
               <li>Creates <strong>1 Test Case</strong> in Jira with all scenarios</li>
               <li>Saves feature file to <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">features/</code> folder</li>
-              <li>Links to Test Plan BTC-104</li>
+              <li>Links to Test Plan XSP-58</li>
               <li><strong>Does NOT execute</strong> - just creates the test</li>
             </ul>
           </div>
           <div style="margin-bottom: 15px;">
             <strong>▶️ Workflow 2: Execute Selected Tests</strong>
             <ul style="margin: 5px 0 0 20px;">
-              <li>Select test cases from BTC-104</li>
+              <li>Select test cases from XSP-58</li>
               <li>Creates Test Execution in Jira</li>
               <li>Triggers GitHub Actions to run tests</li>
               <li>Results uploaded to Jira and posted to Slack</li>
@@ -696,7 +696,7 @@
         <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border-left: 5px solid #f59e0b;">
           <h3 style="margin: 0 0 12px 0; color: #92400e; font-size: 1.3rem;">🚀 How to Execute Tests</h3>
           <ol style="margin: 8px 0 0 20px; padding: 0;">
-            <li>Click <strong>"Execute Selected Tests"</strong> to choose test cases from Jira (BTC-104)</li>
+            <li>Click <strong>"Execute Selected Tests"</strong> to choose test cases from Jira (XSP-58)</li>
             <li>Select test cases and click <strong>"Execute Tests"</strong></li>
             <li>A Test Execution will be created in Jira</li>
             <li>Tests run automatically via GitHub Actions</li>
@@ -709,7 +709,7 @@
           <ul style="margin: 8px 0 0 20px; padding: 0;">
             <li>Uploads generated tests to Jira Xray and GitHub repository</li>
             <li>Creates test cases in BTC project</li>
-            <li>Links tests to Test Plan BTC-104</li>
+            <li>Links tests to Test Plan XSP-58</li>
           </ul>
         </div>
 
@@ -732,7 +732,7 @@
       <h2 style="margin-bottom: 20px; color: #1e293b;">Select Test Cases</h2>
       
       <div style="margin-bottom: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-        <p style="margin: 0; color: #92400e;"><strong>How it works:</strong> Select test cases from BTC-104, click Execute, and a Test Execution will be created in Jira. Tests will run via GitHub Actions, and results will be posted to Slack automatically.</p>
+        <p style="margin: 0; color: #92400e;"><strong>How it works:</strong> Select test cases from XSP-58, click Execute, and a Test Execution will be created in Jira. Tests will run via GitHub Actions, and results will be posted to Slack automatically.</p>
       </div>
 
       <div id="testCasesListSection" style="margin-bottom: 25px;">
@@ -999,7 +999,7 @@
         } else {
           addExecutionStep(`✅ Test Case created: ${testKey}`, '✅');
         }
-        addExecutionStep(`✅ Linked ${testKeys.length} test(s) to BTC-104`, '✅');
+        addExecutionStep(`✅ Linked ${testKeys.length} test(s) to XSP-58`, '✅');
 
         updateProgress(80, 'Uploading to GitHub...', '📤');
         addExecutionStep('Uploading to GitHub repository...');
@@ -1022,8 +1022,8 @@
         }
 
         // Jira link is always valid since the Xray import succeeded above.
-        document.getElementById('jiraLink').href = 'https://automationhubpw.atlassian.net/browse/BTC-104';
-        document.getElementById('jiraLink').textContent = `View Test Plan BTC-104 in Jira`;
+        document.getElementById('jiraLink').href = 'https://automationhubpw.atlassian.net/browse/XSP-58';
+        document.getElementById('jiraLink').textContent = `View Test Plan XSP-58 in Jira`;
         document.getElementById('executionLinks').style.display = 'flex';
 
       } catch (error) {
@@ -1054,7 +1054,7 @@
         availableTestCases = data.testCases;
 
         if (availableTestCases.length === 0) {
-          listDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">No test cases found in BTC-104</div>';
+          listDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">No test cases found in XSP-58</div>';
           return;
         }
 
