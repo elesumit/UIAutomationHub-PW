@@ -178,16 +178,35 @@ app.http('generate', {
   route: 'generate',
   handler: async (request, context) => {
     try {
-      const { description, application, testType } = await request.json();
+      const { description, application, testType, appElements } = await request.json();
       if (!description) return json(400, { error: 'Description is required' });
 
       const isPatientSafety = /patient safety|checkbox|is this a patient/i.test(description);
       const scenarioCount = isPatientSafety ? '10-15' : '5-8';
 
+      // Phase 2 — grounding: if the caller passes a scanned element inventory
+      // (from scripts/app-scanner.ts → app-map.json), inject the REAL element
+      // names so the model writes steps against elements that actually exist
+      // instead of inventing labels. Names are deduped, length-bounded, and capped
+      // to keep the prompt within budget.
+      let grounding = '';
+      if (Array.isArray(appElements) && appElements.length) {
+        const names = [...new Set(
+          appElements
+            .map((e) => (typeof e === 'string' ? e : e && e.name))
+            .filter(Boolean)
+            .map((s) => String(s).trim())
+            .filter((s) => s.length > 0 && s.length <= 60),
+        )].slice(0, 200);
+        if (names.length) {
+          grounding = `\n\n**REAL elements available in the target application (captured from a live scan). Use ONLY these exact names in your "I click on", "I enter ... in", and "I select ... from" steps — do NOT invent element names or navigation that is not in this list:**\n${names.map((n) => `- ${n}`).join('\n')}\n`;
+        }
+      }
+
       const userPrompt = `Generate Gherkin test scenarios for:
 "${description}"
 
-Application: ${application || 'CE Portal and Salesforce'}
+Application: ${application || 'the application under test'}
 Test Type: ${testType || 'General'}
 
 Requirements:
@@ -195,7 +214,9 @@ Requirements:
 - Use @JIRA_PLACEHOLDER_N tags on each scenario (N = 1, 2, 3...).
 - Add appropriate descriptive @tags on the Feature line only.
 - Use realistic test data and cover edge cases and validation rules.
-- Background MUST include: Login → Support → Search → Create a Case → Fill mandatory fields.
+- Base every step strictly on the story/acceptance criteria. Include a Login
+  Background ONLY if the story requires an authenticated session — do not add
+  unrelated flows.${grounding}
 
 Output only the Feature file content, no explanations.`;
 

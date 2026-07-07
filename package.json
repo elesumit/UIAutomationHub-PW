@@ -44,6 +44,7 @@
     "test:btc:headed": "npm run preprocess:features && cross-env HEADLESS=false cucumber-js --profile btc",
     "test:btc:xray": "cross-env XRAY_USE_CUCUMBER=true node scripts/run-with-xray.js \"npm.cmd run test:btc\"",
     "preprocess:features": "ts-node scripts/preprocess-features.ts",
+    "scan": "ts-node scripts/app-scanner.ts",
     "test:excel": "cucumber-js --profile excel",
     "test:excel:headed": "cross-env HEADLESS=false cucumber-js --profile excel",
     "test:excel:tags": "cucumber-js --profile excel --tags",

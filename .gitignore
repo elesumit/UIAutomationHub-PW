@@ -6,6 +6,10 @@ infra/.terraform.lock.hcl
 infra/tfplan
 infra/*.auto.tfvars
 
+# App Scanner output (generated per-app by scripts/app-scanner.ts)
+app-map.json
+*.app-map.json
+
 # OS
 .DS_Store
 Thumbs.db

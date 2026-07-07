@@ -519,11 +519,20 @@
         <div class="examples-box">
           <div class="title">💡 Example Acceptance Criteria</div>
           <ul>
-            <li>User should see appropriate error messages when mandatory fields are missing in case creation</li>
-            <li>Case created in CE Portal should automatically appear in Salesforce with all correct details</li>
-            <li>System should automatically set priority level based on the impact selected by user</li>
-            <li>User should not be able to submit a case without selecting a product from the dropdown</li>
+            <li>User should be able to log out and be returned to the login page</li>
+            <li>User should see an error when logging in with a locked-out account</li>
+            <li>Adding an item to the cart should update the cart badge count</li>
+            <li>User should not be able to check out with an empty cart</li>
           </ul>
+        </div>
+
+        <div class="examples-box" style="border-left-color:#10b981; margin-top:16px;">
+          <div class="title">🗺️ Ground on your app <span style="font-weight:400;color:#64748b;">(optional — makes tests runnable)</span></div>
+          <p style="font-size:0.9rem;color:#475569;margin:8px 0 12px;">
+            Upload an <code>app-map.json</code> (from <code>npm run scan</code>) so the AI writes steps against your app's <strong>real</strong> elements instead of guessing.
+          </p>
+          <input type="file" id="appMapInput" accept="application/json,.json" onchange="loadAppMap(event)" />
+          <div id="appMapStatus" style="font-size:0.9rem;margin-top:8px;color:#059669;font-weight:600;"></div>
         </div>
       </div>
 
@@ -759,6 +768,36 @@
   <script>
     let generatedContent = '';
     let generatedMetadata = {};
+    let appElements = [];  // Phase 2 grounding: real element names from an uploaded app-map.json
+
+    // Parse an uploaded app-map.json (from scripts/app-scanner.ts) into a flat,
+    // deduped list of element identifiers the AI can safely reference.
+    function loadAppMap(event) {
+      const file = event.target.files && event.target.files[0];
+      const statusEl = document.getElementById('appMapStatus');
+      if (!file) { appElements = []; statusEl.textContent = ''; return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const map = JSON.parse(reader.result);
+          const names = new Set();
+          (map.pages || []).forEach(p => (p.elements || []).forEach(el => {
+            const n = (el && (el.name || el.text || '')).trim();
+            if (n && n.length <= 60) names.add(n);
+          }));
+          appElements = Array.from(names);
+          statusEl.style.color = appElements.length ? '#059669' : '#b45309';
+          statusEl.textContent = appElements.length
+            ? `✅ Grounded on ${appElements.length} real elements from ${(map.pages||[]).length} page(s) of ${map.baseUrl || 'your app'}`
+            : '⚠️ No elements found in that file — is it a valid app-map.json?';
+        } catch (e) {
+          appElements = [];
+          statusEl.style.color = '#dc2626';
+          statusEl.textContent = '❌ Could not parse that file as app-map.json';
+        }
+      };
+      reader.readAsText(file);
+    }
     let availableTestCases = [];
     let selectedTestCaseOption = 'new';
     let selectedTestKeys = [];
@@ -790,7 +829,7 @@
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description: criteria })
+          body: JSON.stringify({ description: criteria, appElements })
         });
 
         const data = await response.json();
